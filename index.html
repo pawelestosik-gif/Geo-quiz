@@ -4,700 +4,923 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>World Geography Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,sans-serif;background:#f5f4f0;min-height:100vh;padding:12px;display:flex;flex-direction:column;align-items:center}
-#app{width:100%;max-width:480px;position:relative}
+:root{
+  --bg:#F0EDE8;--card:#FFFFFF;--border:rgba(0,0,0,0.1);
+  --text:#1A1A2E;--sub:#666;--accent:#2563EB;--accent2:#16A34A;
+  --danger:#DC2626;--warn:#D97706;--gold:#F59E0B;
+}
+body{font-family:'Nunito',sans-serif;background:var(--bg);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:12px 12px 40px}
+#app{width:100%;max-width:460px;position:relative}
 .screen{display:none}.screen.active{display:block}
-.card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1rem 1.25rem;margin-bottom:12px}
-h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:2px}
-.sub{font-size:13px;color:#666;margin-bottom:12px}
-.btn{display:flex;align-items:center;width:100%;padding:10px 14px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.15);background:#fff;color:#1a1a1a;font-size:13px;cursor:pointer;margin-bottom:8px;transition:background 0.12s;font-family:inherit;gap:8px}
-.btn:hover{background:#f5f4f0}
-.btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#0F6E56}
-.btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#A32D2D}
-.btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#0F6E56;opacity:0.7}
-.btn-primary{background:#378ADD;border-color:#185FA5;color:#fff;font-weight:500;justify-content:center;padding:10px 16px}
-.btn-primary:hover{background:#185FA5}
-.btn-secondary{justify-content:center}
-.diff-btn{flex:1;padding:8px 6px;font-size:12px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.15);background:#fff;color:#666;cursor:pointer;text-align:center;font-family:inherit}
-.diff-btn.active{background:#E6F1FB;color:#0C447C;border-color:#378ADD;font-weight:500}
-.progress-bar{height:4px;background:rgba(0,0,0,0.08);border-radius:2px;margin-bottom:12px;overflow:hidden}
-.progress-fill{height:100%;background:#378ADD;border-radius:2px;transition:width 0.3s}
-.hud{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
-.hud-stat{background:#f5f4f0;border-radius:8px;padding:4px 10px;font-size:12px;color:#666}
-.hud-stat b{color:#1a1a1a;font-weight:500}
-.step-dots{display:flex;gap:5px;margin-bottom:10px}
-.step-dot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.12)}
-.step-dot.done{background:#1D9E75}.step-dot.active{background:#378ADD}
-.flag-box{font-size:72px;text-align:center;padding:14px 0;line-height:1}
-.feedback{padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:10px;line-height:1.5}
-.feedback.good{background:#E1F5EE;color:#0F6E56}
-.feedback.bad{background:#FCEBEB;color:#A32D2D}
-.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
-.badge-easy{background:#E1F5EE;color:#0F6E56}
-.badge-medium{background:#FAEEDA;color:#854F0B}
-.badge-hard{background:#FCEBEB;color:#A32D2D}
-.award-banner{border-radius:12px;padding:12px 14px;margin-bottom:10px;text-align:center}
-.award-banner.gold{background:#FAEEDA;border:1px solid #EF9F27}
-.award-banner.silver{background:#F1EFE8;border:1px solid #888780}
-.award-banner.bronze{background:#FAECE7;border:1px solid #D85A30}
-.award-banner.none{background:#f5f4f0;border:0.5px solid rgba(0,0,0,0.1)}
-.stars-row{display:flex;gap:4px;justify-content:center;margin:8px 0 12px}
-.star{font-size:28px;opacity:0.2;transition:opacity 0.3s,transform 0.3s}
-.star.earned{opacity:1;transform:scale(1.15)}
-.stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}
-.stat-box{background:#f5f4f0;border-radius:8px;padding:10px;text-align:center}
-.stat-val{font-size:20px;font-weight:500;color:#1a1a1a}
-.stat-lbl{font-size:11px;color:#666;margin-top:1px}
-.bottom-nav{display:flex;border:0.5px solid rgba(0,0,0,0.1);border-radius:10px;overflow:hidden;margin-bottom:14px;background:#fff}
-.nav-btn{flex:1;padding:9px 6px;font-size:11px;border:none;background:transparent;color:#666;cursor:pointer;font-family:inherit}
-.nav-btn.active{background:#E6F1FB;color:#0C447C;font-weight:500}
-.ach-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}
-.ach-card{background:#f5f4f0;border-radius:10px;padding:10px 12px;opacity:0.4}
-.ach-card.unlocked{opacity:1;background:#fff;border:0.5px solid rgba(0,0,0,0.1)}
-.ach-icon{font-size:20px;margin-bottom:4px}
-.ach-name{font-size:12px;font-weight:500;color:#1a1a1a;margin-bottom:2px}
-.ach-desc{font-size:11px;color:#666;line-height:1.3}
-.profile-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.avatar{width:48px;height:48px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid #378ADD}
-.level-bar{height:6px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden;margin-top:4px}
-.level-fill{height:100%;background:#378ADD;border-radius:3px;transition:width 0.4s}
-#toast{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:100}
-#toast.show{opacity:1}
-.confetti-piece{position:absolute;width:8px;height:8px;border-radius:2px;pointer-events:none}
-.map-svg{width:100%;height:auto;display:block;border-radius:10px;border:0.5px solid rgba(0,0,0,0.1);margin-bottom:10px}
-.cp{fill:#C0DD97;stroke:#fff;stroke-width:1.2;cursor:pointer;transition:fill 0.15s}
-.cp:hover{fill:#97C459}
-.cp.dimmed{fill:#D3D1C7;stroke:#fff;cursor:default;pointer-events:none}
-.cp.active-target{fill:#C0DD97;stroke:#378ADD;stroke-width:2}
-.cp.correct-flash{fill:#1D9E75;cursor:default;pointer-events:none}
-.cp.wrong-flash{fill:#E24B4A;cursor:default;pointer-events:none}
-.cp.reveal-flash{fill:#1D9E75;opacity:0.8;cursor:default;pointer-events:none}
-.map-hint{font-size:12px;color:#888;text-align:center;margin-bottom:6px}
+
+/* HOME */
+.home-header{text-align:center;padding:20px 0 16px}
+.home-title{font-size:26px;font-weight:800;color:var(--text);letter-spacing:-0.5px}
+.home-title span{color:var(--accent)}
+.home-sub{font-size:13px;color:var(--sub);margin-top:3px}
+.stats-row{display:flex;gap:8px;margin-bottom:14px}
+.stat-card{flex:1;background:var(--card);border-radius:12px;border:1px solid var(--border);padding:10px;text-align:center}
+.stat-val{font-size:20px;font-weight:800;color:var(--accent)}
+.stat-lbl{font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.xp-bar-wrap{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:12px;margin-bottom:14px}
+.xp-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.xp-level{font-size:13px;font-weight:700;color:var(--text)}
+.xp-pts{font-size:12px;color:var(--sub)}
+.xp-track{height:8px;background:rgba(0,0,0,0.08);border-radius:4px;overflow:hidden}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--accent),#7C3AED);border-radius:4px;transition:width .5s}
+
+/* CONTINENT GRID */
+.section-label{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.continent-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.cont-card{background:var(--card);border-radius:12px;border:2px solid var(--border);padding:14px 12px;cursor:pointer;transition:all .15s;text-align:left}
+.cont-card:hover,.cont-card.sel{border-color:var(--accent);background:#EFF6FF}
+.cont-card .cont-icon{font-size:26px;margin-bottom:4px}
+.cont-card .cont-name{font-size:13px;font-weight:700;color:var(--text)}
+.cont-card .cont-count{font-size:11px;color:var(--sub)}
+
+/* DIFFICULTY */
+.diff-row{display:flex;gap:6px;margin-bottom:14px}
+.diff-btn{flex:1;padding:9px 4px;font-size:12px;border-radius:10px;border:1.5px solid var(--border);background:var(--card);color:var(--sub);cursor:pointer;text-align:center;font-family:inherit;font-weight:600;transition:all .12s}
+.diff-btn.active{background:#EFF6FF;color:var(--accent);border-color:var(--accent)}
+
+.btn-primary{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .12s;letter-spacing:.2px}
+.btn-primary:hover{background:#1D4ED8}
+.btn-primary:disabled{background:#93C5FD;cursor:not-allowed}
+.btn-secondary{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:11px;border-radius:12px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:8px}
+
+/* GAME */
+.game-topbar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.game-back{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;font-family:inherit;color:var(--sub)}
+.game-progress{flex:1;height:6px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden}
+.game-progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .4s}
+.game-score{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap}
+.streak-badge{background:#FEF3C7;border:1px solid #FCD34D;border-radius:20px;padding:3px 8px;font-size:11px;font-weight:700;color:#92400E;display:none}
+.streak-badge.show{display:inline-block}
+
+.q-card{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:16px;margin-bottom:10px}
+.q-step-dots{display:flex;gap:5px;margin-bottom:10px}
+.q-step-dot{width:22px;height:5px;background:rgba(0,0,0,0.1);border-radius:3px;transition:background .2s}
+.q-step-dot.done{background:var(--accent2)}
+.q-step-dot.active{background:var(--accent)}
+.q-label{font-size:11px;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+.q-flag-big{font-size:56px;text-align:center;padding:10px 0;line-height:1}
+.q-question{font-size:16px;font-weight:700;color:var(--text);margin-bottom:12px;line-height:1.4}
+
+.ans-btn{display:flex;align-items:center;gap:10px;width:100%;padding:11px 13px;border-radius:10px;border:1.5px solid var(--border);background:#fff;color:var(--text);font-size:14px;font-weight:600;cursor:pointer;margin-bottom:7px;transition:all .12s;font-family:inherit;text-align:left}
+.ans-btn:hover:not(:disabled){background:#F8FAFF;border-color:var(--accent)}
+.ans-btn.correct{background:#DCFCE7;border-color:var(--accent2);color:#14532D}
+.ans-btn.wrong{background:#FEE2E2;border-color:var(--danger);color:#7F1D1D}
+.ans-btn.reveal{background:#DCFCE7;border-color:var(--accent2);color:#14532D;opacity:.75}
+.ans-btn:disabled{cursor:default}
+.ans-icon{font-size:16px;min-width:20px;text-align:center}
+
+/* MAP */
+.map-card{background:var(--card);border-radius:14px;border:1px solid var(--border);padding:12px;margin-bottom:10px}
+.map-hint{font-size:12px;color:var(--sub);text-align:center;margin-top:6px}
+#map-svg{width:100%;display:block;border-radius:8px;background:#C8E6F5;cursor:pointer}
+#map-svg .country{stroke:#fff;stroke-width:0.5;fill:#A8C4D8;transition:fill .15s;cursor:pointer}
+#map-svg .country.quiz-country{fill:#60A5FA;stroke:#2563EB;stroke-width:1}
+#map-svg .country.correct{fill:#4ADE80 !important;stroke:#16A34A !important;stroke-width:2}
+#map-svg .country.wrong{fill:#F87171 !important;stroke:#DC2626 !important;stroke-width:2}
+#map-svg .country.reveal{fill:#4ADE80 !important;stroke:#16A34A !important;stroke-width:2;opacity:.8}
+#map-svg .country:hover{opacity:.8}
+
+.map-loading{text-align:center;padding:40px 20px;color:var(--sub);font-size:13px}
+.map-loading .spinner{width:32px;height:32px;border:3px solid rgba(0,0,0,0.1);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* RESULT / FEEDBACK */
+.feedback-bar{border-radius:10px;padding:10px 13px;font-size:13px;font-weight:600;margin-bottom:8px;display:none}
+.feedback-bar.correct{display:flex;align-items:center;gap:6px;background:#DCFCE7;color:#14532D}
+.feedback-bar.wrong{display:flex;align-items:center;gap:6px;background:#FEE2E2;color:#7F1D1D}
+.next-btn{width:100%;padding:12px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:none}
+.next-btn.show{display:block}
+
+/* RESULTS SCREEN */
+.result-hero{text-align:center;padding:20px 0 14px}
+.result-stars{font-size:40px;margin-bottom:4px}
+.result-title{font-size:22px;font-weight:800;color:var(--text)}
+.result-sub{font-size:14px;color:var(--sub);margin-top:3px}
+.result-stats{display:flex;gap:8px;margin-bottom:14px}
+.result-stat{flex:1;background:var(--card);border-radius:12px;border:1px solid var(--border);padding:10px;text-align:center}
+.result-stat-val{font-size:20px;font-weight:800;color:var(--accent)}
+.result-stat-lbl{font-size:11px;color:var(--sub);font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.breakdown-list{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:4px 12px;margin-bottom:12px}
+.bk-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.bk-row:last-child{border-bottom:none}
+.bk-flag{font-size:20px}
+.bk-name{flex:1;font-weight:600;color:var(--text)}
+.bk-score{font-size:12px;color:var(--sub)}
+
+/* LEADERBOARD */
+.lb-list{background:var(--card);border-radius:12px;border:1px solid var(--border);padding:4px 12px;margin-bottom:12px}
+.lb-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{font-size:14px;font-weight:800;width:24px;text-align:center;color:var(--sub)}
+.lb-rank.gold{color:var(--gold)}
+.lb-name{flex:1;font-weight:600;color:var(--text)}
+.lb-pts{font-weight:700;color:var(--accent)}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1A1A2E;color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;transition:all .25s;pointer-events:none;z-index:999;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* CONFETTI */
+.confetti-p{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:998}
+
+/* ACHIEVEMENTS */
+.ach-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.ach-card{background:var(--card);border-radius:10px;border:1px solid var(--border);padding:10px;opacity:.4}
+.ach-card.unlocked{opacity:1;border-color:var(--gold);background:#FFFBEB}
+.ach-icon{font-size:22px;margin-bottom:3px}
+.ach-name{font-size:11px;font-weight:700;color:var(--text)}
+.ach-desc{font-size:10px;color:var(--sub)}
 </style>
 </head>
 <body>
 <div id="app">
+
+<!-- HOME -->
+<div id="s-home" class="screen active">
+  <div class="home-header">
+    <div class="home-title">🌍 Geo<span>Quiz</span></div>
+    <div class="home-sub">Test your world geography knowledge</div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val" id="h-played">0</div><div class="stat-lbl">Played</div></div>
+    <div class="stat-card"><div class="stat-val" id="h-best">-</div><div class="stat-lbl">Best</div></div>
+    <div class="stat-card"><div class="stat-val" id="h-streak">0</div><div class="stat-lbl">Best Streak</div></div>
+  </div>
+  <div class="xp-bar-wrap">
+    <div class="xp-row"><span class="xp-level" id="h-level">Explorer</span><span class="xp-pts" id="h-xp">0 XP</span></div>
+    <div class="xp-track"><div class="xp-fill" id="h-xp-fill" style="width:0%"></div></div>
+  </div>
+  <div class="section-label">Choose Region</div>
+  <div class="continent-grid" id="cont-grid"></div>
+  <div class="section-label">Difficulty</div>
+  <div class="diff-row" id="diff-row">
+    <button class="diff-btn active" data-d="easy" onclick="setDiff('easy')">⭐ Easy<br><span style="font-size:10px;font-weight:400">5 countries</span></button>
+    <button class="diff-btn" data-d="medium" onclick="setDiff('medium')">⭐⭐ Medium<br><span style="font-size:10px;font-weight:400">8 countries</span></button>
+    <button class="diff-btn" data-d="hard" onclick="setDiff('hard')">⭐⭐⭐ Hard<br><span style="font-size:10px;font-weight:400">12 countries</span></button>
+  </div>
+  <button class="btn-primary" id="start-btn" onclick="startGame()" disabled>Choose a region first</button>
+  <button class="btn-secondary" onclick="showScreen('s-lb')">🏆 Leaderboard</button>
+  <button class="btn-secondary" onclick="showScreen('s-ach')">🎖 Achievements</button>
+</div>
+
+<!-- GAME -->
+<div id="s-game" class="screen">
+  <div class="game-topbar">
+    <button class="game-back" onclick="confirmQuit()">✕</button>
+    <div class="game-progress"><div class="game-progress-fill" id="g-prog"></div></div>
+    <div class="game-score">⭐ <span id="g-score">0</span></div>
+    <div class="streak-badge" id="g-streak"></div>
+  </div>
+  <div class="q-card" id="q-card">
+    <div class="q-step-dots" id="step-dots"></div>
+    <div class="q-label" id="q-label"></div>
+    <div id="q-content"></div>
+  </div>
+  <!-- Map step -->
+  <div class="map-card" id="map-card" style="display:none">
+    <div id="map-container"></div>
+    <div class="map-hint" id="map-hint">Tap the correct country on the map</div>
+  </div>
+  <div class="feedback-bar" id="feedback"></div>
+  <button class="next-btn" id="next-btn" onclick="nextStep()">Continue →</button>
+</div>
+
+<!-- RESULTS -->
+<div id="s-result" class="screen">
+  <div class="result-hero">
+    <div class="result-stars" id="res-stars"></div>
+    <div class="result-title" id="res-title"></div>
+    <div class="result-sub" id="res-sub"></div>
+  </div>
+  <div class="result-stats">
+    <div class="result-stat"><div class="result-stat-val" id="res-score">0</div><div class="result-stat-lbl">Score</div></div>
+    <div class="result-stat"><div class="result-stat-val" id="res-acc">0%</div><div class="result-stat-lbl">Accuracy</div></div>
+    <div class="result-stat"><div class="result-stat-val" id="res-xp">+0</div><div class="result-stat-lbl">XP Earned</div></div>
+  </div>
+  <div id="res-breakdown" class="breakdown-list"></div>
+  <button class="btn-primary" onclick="showScreen('s-home');updateHomeUI()">Play Again</button>
+  <button class="btn-secondary" onclick="showScreen('s-lb')">🏆 Leaderboard</button>
+</div>
+
+<!-- LEADERBOARD -->
+<div id="s-lb" class="screen">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:8px">
+    <button class="game-back" onclick="showScreen('s-home')">← Back</button>
+    <h2 style="font-size:18px;font-weight:800;color:var(--text)">🏆 Leaderboard</h2>
+  </div>
+  <div id="lb-list" class="lb-list"></div>
+</div>
+
+<!-- ACHIEVEMENTS -->
+<div id="s-ach" class="screen">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:8px">
+    <button class="game-back" onclick="showScreen('s-home')">← Back</button>
+    <h2 style="font-size:18px;font-weight:800;color:var(--text)">🎖 Achievements</h2>
+  </div>
+  <div class="ach-grid" id="ach-grid"></div>
+</div>
+
+</div>
 <div id="toast"></div>
 
-<div id="s-home" class="screen active">
-  <div style="padding:4px 0 10px;display:flex;align-items:center;justify-content:space-between">
-    <div><h1>World Quiz</h1><p class="sub" style="margin:0">Flag → capital → find on map</p></div>
-    <div id="home-streak" style="display:none;background:#FAEEDA;color:#854F0B;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:500">🔥 <span id="streak-num">0</span></div>
-  </div>
-  <div class="card" style="padding:10px 12px;margin-bottom:10px">
-    <div class="profile-header">
-      <div class="avatar" id="home-avatar">🌍</div>
-      <div style="flex:1">
-        <div style="font-size:12px;color:#666">Level <b id="home-level">1</b> <span id="home-title">Explorer</span></div>
-        <div style="font-size:11px;color:#888;margin-bottom:3px" id="home-xp-label">0 / 100 XP</div>
-        <div class="level-bar"><div class="level-fill" id="home-level-fill" style="width:0%"></div></div>
-      </div>
-    </div>
-    <div class="stat-grid">
-      <div class="stat-box"><div class="stat-val" id="home-total-score">0</div><div class="stat-lbl">Total score</div></div>
-      <div class="stat-box"><div class="stat-val" id="home-games">0</div><div class="stat-lbl">Games played</div></div>
-      <div class="stat-box"><div class="stat-val" id="home-best-streak">0</div><div class="stat-lbl">Best streak</div></div>
-      <div class="stat-box"><div class="stat-val" id="home-accuracy">-</div><div class="stat-lbl">Accuracy</div></div>
-    </div>
-  </div>
-  <div class="bottom-nav">
-    <button class="nav-btn active" onclick="showHomeTab('play')">🎮 Play</button>
-    <button class="nav-btn" onclick="showHomeTab('achievements')">🏆 Awards</button>
-    <button class="nav-btn" onclick="showHomeTab('leaderboard')">📋 Scores</button>
-  </div>
-  <div id="tab-play">
-    <div style="display:flex;gap:6px;margin-bottom:8px">
-      <button class="diff-btn active" id="d-easy" onclick="setDiff('easy')">Easy</button>
-      <button class="diff-btn" id="d-medium" onclick="setDiff('medium')">Medium</button>
-      <button class="diff-btn" id="d-hard" onclick="setDiff('hard')">Hard</button>
-    </div>
-    <p style="font-size:11px;color:#888;margin-bottom:12px">Easy: 4 choices · Medium: 6 choices · Hard: type the answer</p>
-    <button class="btn" onclick="startQuiz('Europe')">🌍 Europe <span style="font-size:11px;color:#888;margin-left:auto">25 countries</span></button>
-    <button class="btn" onclick="startQuiz('Africa')">🌍 Africa <span style="font-size:11px;color:#888;margin-left:auto">20 countries</span></button>
-    <button class="btn" onclick="startQuiz('Asia')">🌏 Asia <span style="font-size:11px;color:#888;margin-left:auto">20 countries</span></button>
-    <button class="btn" onclick="startQuiz('North America')">🌎 N. America <span style="font-size:11px;color:#888;margin-left:auto">12 countries</span></button>
-    <button class="btn" onclick="startQuiz('South America')">🌎 S. America <span style="font-size:11px;color:#888;margin-left:auto">12 countries</span></button>
-    <button class="btn" onclick="startQuiz('All')">🌐 All continents <span style="font-size:11px;color:#888;margin-left:auto">shuffle</span></button>
-  </div>
-  <div id="tab-achievements" style="display:none"><div class="ach-grid" id="ach-grid"></div></div>
-  <div id="tab-leaderboard" style="display:none">
-    <div id="lb-rows"></div>
-    <div id="lb-empty" style="font-size:13px;color:#888;text-align:center;padding:20px 0">No games yet!</div>
-  </div>
-</div>
-
-<div id="s-quiz" class="screen">
-  <div class="hud">
-    <div class="hud-stat">Q <b id="q-num">1</b>/<b id="q-total">10</b></div>
-    <div class="hud-stat">Score <b id="q-score">0</b></div>
-    <div class="hud-stat" id="q-streak-hud" style="display:none">🔥 <b id="q-streak-val">0</b></div>
-    <div class="hud-stat" id="q-cont-disp">Europe</div>
-  </div>
-  <div class="progress-bar"><div class="progress-fill" id="q-progress" style="width:0%"></div></div>
-  <div class="step-dots" id="step-dots"></div>
-  <div id="q-body"></div>
-  <button class="btn btn-primary" id="next-btn" style="display:none" onclick="nextStep()">Continue →</button>
-</div>
-
-<div id="s-result" class="screen">
-  <div id="result-award-banner" class="award-banner none"></div>
-  <div class="stars-row" id="result-stars"></div>
-  <div class="card">
-    <div style="font-size:15px;font-weight:500;margin-bottom:4px">Round complete!</div>
-    <p class="sub" id="res-sub"></p>
-    <div class="stat-grid">
-      <div class="stat-box"><div class="stat-val" id="res-score"></div><div class="stat-lbl">Score</div></div>
-      <div class="stat-box"><div class="stat-val" id="res-acc"></div><div class="stat-lbl">Accuracy</div></div>
-      <div class="stat-box"><div class="stat-val" id="res-streak"></div><div class="stat-lbl">Best streak</div></div>
-      <div class="stat-box"><div class="stat-val" id="res-xp"></div><div class="stat-lbl">XP earned</div></div>
-    </div>
-    <div id="new-achievements" style="margin-bottom:10px"></div>
-    <div id="res-breakdown" style="margin-bottom:12px"></div>
-    <button class="btn btn-primary" onclick="startQuiz(G.continent)" style="margin-bottom:8px">Play again</button>
-    <button class="btn btn-secondary" onclick="showHome()">Choose continent</button>
-  </div>
-</div>
-</div>
-
 <script>
-const COUNTRIES={
-  Europe:[
-    {name:"France",capital:"Paris",flag:"🇫🇷",iso:"FRA"},
-    {name:"Germany",capital:"Berlin",flag:"🇩🇪",iso:"DEU"},
-    {name:"United Kingdom",capital:"London",flag:"🇬🇧",iso:"GBR"},
-    {name:"Italy",capital:"Rome",flag:"🇮🇹",iso:"ITA"},
-    {name:"Spain",capital:"Madrid",flag:"🇪🇸",iso:"ESP"},
-    {name:"Poland",capital:"Warsaw",flag:"🇵🇱",iso:"POL"},
-    {name:"Netherlands",capital:"Amsterdam",flag:"🇳🇱",iso:"NLD"},
-    {name:"Sweden",capital:"Stockholm",flag:"🇸🇪",iso:"SWE"},
-    {name:"Norway",capital:"Oslo",flag:"🇳🇴",iso:"NOR"},
-    {name:"Switzerland",capital:"Bern",flag:"🇨🇭",iso:"CHE"},
-    {name:"Portugal",capital:"Lisbon",flag:"🇵🇹",iso:"PRT"},
-    {name:"Belgium",capital:"Brussels",flag:"🇧🇪",iso:"BEL"},
-    {name:"Austria",capital:"Vienna",flag:"🇦🇹",iso:"AUT"},
-    {name:"Greece",capital:"Athens",flag:"🇬🇷",iso:"GRC"},
-    {name:"Czech Republic",capital:"Prague",flag:"🇨🇿",iso:"CZE"},
-    {name:"Hungary",capital:"Budapest",flag:"🇭🇺",iso:"HUN"},
-    {name:"Romania",capital:"Bucharest",flag:"🇷🇴",iso:"ROU"},
-    {name:"Ukraine",capital:"Kyiv",flag:"🇺🇦",iso:"UKR"},
-    {name:"Finland",capital:"Helsinki",flag:"🇫🇮",iso:"FIN"},
-    {name:"Denmark",capital:"Copenhagen",flag:"🇩🇰",iso:"DNK"},
-    {name:"Slovakia",capital:"Bratislava",flag:"🇸🇰",iso:"SVK"},
-    {name:"Croatia",capital:"Zagreb",flag:"🇭🇷",iso:"HRV"},
-    {name:"Serbia",capital:"Belgrade",flag:"🇷🇸",iso:"SRB"},
-    {name:"Bulgaria",capital:"Sofia",flag:"🇧🇬",iso:"BGR"},
-    {name:"Ireland",capital:"Dublin",flag:"🇮🇪",iso:"IRL"},
-  ],
-  Africa:[
-    {name:"Nigeria",capital:"Abuja",flag:"🇳🇬",iso:"NGA"},
-    {name:"Ethiopia",capital:"Addis Ababa",flag:"🇪🇹",iso:"ETH"},
-    {name:"Egypt",capital:"Cairo",flag:"🇪🇬",iso:"EGY"},
-    {name:"Kenya",capital:"Nairobi",flag:"🇰🇪",iso:"KEN"},
-    {name:"South Africa",capital:"Pretoria",flag:"🇿🇦",iso:"ZAF"},
-    {name:"Morocco",capital:"Rabat",flag:"🇲🇦",iso:"MAR"},
-    {name:"Ghana",capital:"Accra",flag:"🇬🇭",iso:"GHA"},
-    {name:"Tanzania",capital:"Dodoma",flag:"🇹🇿",iso:"TZA"},
-    {name:"Algeria",capital:"Algiers",flag:"🇩🇿",iso:"DZA"},
-    {name:"Zimbabwe",capital:"Harare",flag:"🇿🇼",iso:"ZWE"},
-    {name:"Senegal",capital:"Dakar",flag:"🇸🇳",iso:"SEN"},
-    {name:"Uganda",capital:"Kampala",flag:"🇺🇬",iso:"UGA"},
-    {name:"Mozambique",capital:"Maputo",flag:"🇲🇿",iso:"MOZ"},
-    {name:"Cameroon",capital:"Yaoundé",flag:"🇨🇲",iso:"CMR"},
-    {name:"Ivory Coast",capital:"Yamoussoukro",flag:"🇨🇮",iso:"CIV"},
-    {name:"Madagascar",capital:"Antananarivo",flag:"🇲🇬",iso:"MDG"},
-    {name:"Angola",capital:"Luanda",flag:"🇦🇴",iso:"AGO"},
-    {name:"Sudan",capital:"Khartoum",flag:"🇸🇩",iso:"SDN"},
-    {name:"Libya",capital:"Tripoli",flag:"🇱🇾",iso:"LBY"},
-    {name:"Tunisia",capital:"Tunis",flag:"🇹🇳",iso:"TUN"},
-  ],
-  Asia:[
-    {name:"China",capital:"Beijing",flag:"🇨🇳",iso:"CHN"},
-    {name:"Japan",capital:"Tokyo",flag:"🇯🇵",iso:"JPN"},
-    {name:"India",capital:"New Delhi",flag:"🇮🇳",iso:"IND"},
-    {name:"South Korea",capital:"Seoul",flag:"🇰🇷",iso:"KOR"},
-    {name:"Indonesia",capital:"Jakarta",flag:"🇮🇩",iso:"IDN"},
-    {name:"Saudi Arabia",capital:"Riyadh",flag:"🇸🇦",iso:"SAU"},
-    {name:"Thailand",capital:"Bangkok",flag:"🇹🇭",iso:"THA"},
-    {name:"Vietnam",capital:"Hanoi",flag:"🇻🇳",iso:"VNM"},
-    {name:"Turkey",capital:"Ankara",flag:"🇹🇷",iso:"TUR"},
-    {name:"Iran",capital:"Tehran",flag:"🇮🇷",iso:"IRN"},
-    {name:"Pakistan",capital:"Islamabad",flag:"🇵🇰",iso:"PAK"},
-    {name:"Bangladesh",capital:"Dhaka",flag:"🇧🇩",iso:"BGD"},
-    {name:"Philippines",capital:"Manila",flag:"🇵🇭",iso:"PHL"},
-    {name:"Malaysia",capital:"Kuala Lumpur",flag:"🇲🇾",iso:"MYS"},
-    {name:"Iraq",capital:"Baghdad",flag:"🇮🇶",iso:"IRQ"},
-    {name:"Afghanistan",capital:"Kabul",flag:"🇦🇫",iso:"AFG"},
-    {name:"Kazakhstan",capital:"Astana",flag:"🇰🇿",iso:"KAZ"},
-    {name:"Nepal",capital:"Kathmandu",flag:"🇳🇵",iso:"NPL"},
-    {name:"Sri Lanka",capital:"Colombo",flag:"🇱🇰",iso:"LKA"},
-    {name:"Israel",capital:"Jerusalem",flag:"🇮🇱",iso:"ISR"},
-  ],
-  "North America":[
-    {name:"United States",capital:"Washington D.C.",flag:"🇺🇸",iso:"USA"},
-    {name:"Canada",capital:"Ottawa",flag:"🇨🇦",iso:"CAN"},
-    {name:"Mexico",capital:"Mexico City",flag:"🇲🇽",iso:"MEX"},
-    {name:"Cuba",capital:"Havana",flag:"🇨🇺",iso:"CUB"},
-    {name:"Guatemala",capital:"Guatemala City",flag:"🇬🇹",iso:"GTM"},
-    {name:"Honduras",capital:"Tegucigalpa",flag:"🇭🇳",iso:"HND"},
-    {name:"Costa Rica",capital:"San José",flag:"🇨🇷",iso:"CRI"},
-    {name:"Panama",capital:"Panama City",flag:"🇵🇦",iso:"PAN"},
-    {name:"Jamaica",capital:"Kingston",flag:"🇯🇲",iso:"JAM"},
-    {name:"Haiti",capital:"Port-au-Prince",flag:"🇭🇹",iso:"HTI"},
-    {name:"Dominican Republic",capital:"Santo Domingo",flag:"🇩🇴",iso:"DOM"},
-    {name:"El Salvador",capital:"San Salvador",flag:"🇸🇻",iso:"SLV"},
-  ],
-  "South America":[
-    {name:"Brazil",capital:"Brasília",flag:"🇧🇷",iso:"BRA"},
-    {name:"Argentina",capital:"Buenos Aires",flag:"🇦🇷",iso:"ARG"},
-    {name:"Colombia",capital:"Bogotá",flag:"🇨🇴",iso:"COL"},
-    {name:"Peru",capital:"Lima",flag:"🇵🇪",iso:"PER"},
-    {name:"Venezuela",capital:"Caracas",flag:"🇻🇪",iso:"VEN"},
-    {name:"Chile",capital:"Santiago",flag:"🇨🇱",iso:"CHL"},
-    {name:"Ecuador",capital:"Quito",flag:"🇪🇨",iso:"ECU"},
-    {name:"Bolivia",capital:"Sucre",flag:"🇧🇴",iso:"BOL"},
-    {name:"Paraguay",capital:"Asunción",flag:"🇵🇾",iso:"PRY"},
-    {name:"Uruguay",capital:"Montevideo",flag:"🇺🇾",iso:"URY"},
-    {name:"Guyana",capital:"Georgetown",flag:"🇬🇾",iso:"GUY"},
-    {name:"Suriname",capital:"Paramaribo",flag:"🇸🇷",iso:"SUR"},
-  ]
-};
-
-const MAPS={
-Europe:`<svg class="map-svg" viewBox="0 0 500 420" xmlns="http://www.w3.org/2000/svg" style="background:#B5D4F4">
-<path class="cp" id="c-ISL" d="M52,32 L88,28 L96,42 L88,56 L58,58 L46,45 Z"/>
-<path class="cp" id="c-NOR" d="M215,18 L268,15 L285,28 L278,52 L255,62 L230,58 L212,42 Z"/>
-<path class="cp" id="c-SWE" d="M252,58 L278,50 L290,68 L285,100 L268,122 L248,118 L238,92 L242,68 Z"/>
-<path class="cp" id="c-FIN" d="M278,28 L325,22 L338,42 L332,82 L312,102 L285,98 L280,72 L282,48 Z"/>
-<path class="cp" id="c-EST" d="M322,72 L348,68 L352,84 L325,88 L318,80 Z"/>
-<path class="cp" id="c-LVA" d="M322,88 L350,85 L352,102 L325,105 L318,96 Z"/>
-<path class="cp" id="c-LTU" d="M312,105 L342,102 L345,118 L315,120 L308,112 Z"/>
-<path class="cp" id="c-DNK" d="M228,105 L242,102 L245,118 L232,122 L222,115 Z"/>
-<path class="cp" id="c-GBR" d="M158,72 L185,65 L195,80 L192,112 L175,122 L158,110 L152,92 Z"/>
-<path class="cp" id="c-IRL" d="M138,82 L158,78 L160,98 L148,108 L135,100 Z"/>
-<path class="cp" id="c-NLD" d="M225,128 L242,125 L245,140 L230,144 L222,138 Z"/>
-<path class="cp" id="c-BEL" d="M222,140 L242,138 L245,154 L228,158 L218,150 Z"/>
-<path class="cp" id="c-LUX" d="M242,150 L252,148 L254,158 L244,160 Z"/>
-<path class="cp" id="c-FRA" d="M178,148 L225,140 L240,158 L245,190 L222,210 L192,215 L170,200 L168,172 L175,155 Z"/>
-<path class="cp" id="c-PRT" d="M152,198 L172,195 L175,225 L162,238 L150,230 L148,212 Z"/>
-<path class="cp" id="c-ESP" d="M155,188 L192,185 L210,192 L215,215 L198,232 L172,238 L155,230 L148,215 L150,198 Z"/>
-<path class="cp" id="c-DEU" d="M242,122 L285,118 L295,135 L290,165 L265,172 L242,165 L235,150 L232,135 Z"/>
-<path class="cp" id="c-CHE" d="M240,172 L268,168 L272,185 L252,192 L238,185 Z"/>
-<path class="cp" id="c-AUT" d="M268,165 L305,160 L312,175 L298,185 L270,182 Z"/>
-<path class="cp" id="c-ITA" d="M242,192 L272,185 L288,198 L292,225 L280,252 L268,268 L256,265 L250,242 L246,218 L240,200 Z"/>
-<path class="cp" id="c-POL" d="M290,118 L338,115 L345,140 L338,162 L308,165 L288,158 L284,140 Z"/>
-<path class="cp" id="c-CZE" d="M288,158 L320,155 L325,170 L302,175 L286,170 Z"/>
-<path class="cp" id="c-SVK" d="M320,158 L345,152 L350,168 L328,172 L318,168 Z"/>
-<path class="cp" id="c-HUN" d="M298,175 L338,170 L345,185 L328,198 L298,195 L290,185 Z"/>
-<path class="cp" id="c-ROU" d="M338,162 L382,158 L388,180 L375,202 L345,205 L330,195 L332,175 Z"/>
-<path class="cp" id="c-BGR" d="M345,202 L378,198 L382,218 L360,225 L338,220 L335,208 Z"/>
-<path class="cp" id="c-GRC" d="M318,218 L348,212 L355,228 L344,248 L325,252 L312,240 L315,225 Z"/>
-<path class="cp" id="c-HRV" d="M282,185 L308,180 L314,195 L302,205 L282,200 L278,192 Z"/>
-<path class="cp" id="c-SRB" d="M308,195 L338,190 L342,208 L326,218 L308,212 L305,202 Z"/>
-<path class="cp" id="c-UKR" d="M342,138 L400,132 L412,155 L405,180 L372,188 L342,182 L338,165 Z"/>
-<path class="cp" id="c-BLR" d="M338,115 L380,110 L385,132 L365,142 L340,140 L335,125 Z"/>
-</svg>`,
-
-Africa:`<svg class="map-svg" viewBox="0 0 460 540" xmlns="http://www.w3.org/2000/svg" style="background:#B5D4F4">
-<path class="cp" id="c-MAR" d="M112,48 L168,42 L178,62 L172,90 L145,100 L118,92 L105,72 Z"/>
-<path class="cp" id="c-DZA" d="M168,42 L285,38 L295,60 L288,108 L245,118 L195,115 L178,90 L172,62 Z"/>
-<path class="cp" id="c-TUN" d="M255,42 L280,40 L288,58 L278,82 L258,85 L248,65 Z"/>
-<path class="cp" id="c-LBY" d="M278,42 L362,40 L368,62 L360,115 L312,122 L285,118 L282,90 L278,60 Z"/>
-<path class="cp" id="c-EGY" d="M360,42 L415,40 L420,62 L410,110 L362,115 L358,85 Z"/>
-<path class="cp" id="c-MRT" d="M72,105 L148,100 L155,135 L148,172 L105,178 L75,162 L68,132 Z"/>
-<path class="cp" id="c-MLI" d="M148,100 L242,95 L250,120 L245,162 L205,168 L162,165 L152,138 Z"/>
-<path class="cp" id="c-NER" d="M242,95 L312,90 L322,115 L315,158 L268,162 L248,155 L252,120 Z"/>
-<path class="cp" id="c-TCD" d="M312,90 L365,88 L372,112 L365,158 L322,162 L315,135 Z"/>
-<path class="cp" id="c-SDN" d="M362,88 L418,85 L425,110 L420,172 L378,178 L352,172 L345,145 L360,118 Z"/>
-<path class="cp" id="c-ETH" d="M400,165 L445,158 L458,182 L445,215 L415,225 L385,218 L378,192 L388,172 Z"/>
-<path class="cp" id="c-SEN" d="M72,162 L108,158 L112,175 L98,188 L74,185 L68,175 Z"/>
-<path class="cp" id="c-GHA" d="M168,185 L202,182 L208,205 L198,232 L172,238 L160,218 L162,195 Z"/>
-<path class="cp" id="c-CIV" d="M122,188 L172,185 L178,208 L168,232 L138,235 L120,218 L118,202 Z"/>
-<path class="cp" id="c-NGA" d="M225,158 L315,152 L322,178 L315,222 L275,232 L238,225 L225,198 L222,170 Z"/>
-<path class="cp" id="c-CMR" d="M312,158 L352,155 L358,182 L345,215 L318,222 L308,202 L312,175 Z"/>
-<path class="cp" id="c-AGO" d="M268,252 L345,248 L352,275 L345,320 L308,328 L272,320 L262,290 Z"/>
-<path class="cp" id="c-COD" d="M322,182 L392,178 L402,208 L395,265 L352,275 L318,268 L312,245 L315,215 L328,208 Z"/>
-<path class="cp" id="c-TZA" d="M378,245 L428,238 L435,268 L422,305 L388,312 L362,300 L358,275 L368,255 Z"/>
-<path class="cp" id="c-KEN" d="M402,210 L445,205 L452,232 L438,260 L408,265 L388,252 L395,228 Z"/>
-<path class="cp" id="c-UGA" d="M380,195 L412,188 L418,212 L400,222 L378,218 Z"/>
-<path class="cp" id="c-MOZ" d="M395,270 L428,265 L435,295 L428,355 L398,365 L372,355 L365,322 L372,292 Z"/>
-<path class="cp" id="c-ZWE" d="M355,315 L398,308 L405,335 L388,355 L358,358 L342,345 L345,325 Z"/>
-<path class="cp" id="c-ZAF" d="M268,380 L348,372 L358,398 L345,428 L312,442 L278,435 L255,412 L258,392 Z"/>
-<path class="cp" id="c-MDG" d="M445,298 L462,292 L468,322 L460,362 L442,368 L432,348 L435,315 Z"/>
-<path class="cp" id="c-SUD" d="M350,145 L360,120 L368,118 L370,150 Z"/>
-</svg>`,
-
-Asia:`<svg class="map-svg" viewBox="0 0 560 420" xmlns="http://www.w3.org/2000/svg" style="background:#B5D4F4">
-<path class="cp" id="c-TUR" d="M78,95 L158,88 L168,108 L162,128 L112,135 L78,128 L72,110 Z"/>
-<path class="cp" id="c-ISR" d="M148,128 L162,125 L165,148 L154,155 L144,148 Z"/>
-<path class="cp" id="c-IRQ" d="M162,88 L232,82 L242,105 L235,148 L200,158 L180,148 L175,125 L168,108 Z"/>
-<path class="cp" id="c-IRN" d="M185,72 L272,65 L285,85 L278,138 L242,152 L205,145 L192,125 L185,105 Z"/>
-<path class="cp" id="c-SAU" d="M162,148 L242,140 L255,162 L250,215 L215,235 L175,238 L152,220 L148,188 Z"/>
-<path class="cp" id="c-AFG" d="M272,65 L342,58 L352,80 L345,115 L312,125 L278,118 L272,95 Z"/>
-<path class="cp" id="c-PAK" d="M342,58 L395,52 L408,75 L402,118 L362,135 L328,128 L315,112 L318,85 Z"/>
-<path class="cp" id="c-KAZ" d="M212,18 L342,12 L355,35 L348,58 L272,65 L225,58 L208,40 Z"/>
-<path class="cp" id="c-IND" d="M352,82 L408,75 L425,100 L428,155 L412,202 L385,235 L358,242 L330,228 L318,195 L315,155 L318,120 L335,102 Z"/>
-<path class="cp" id="c-NPL" d="M382,105 L422,98 L425,115 L382,122 Z"/>
-<path class="cp" id="c-BGD" d="M428,135 L452,128 L458,150 L442,165 L422,162 L420,148 Z"/>
-<path class="cp" id="c-LKA" d="M385,248 L400,244 L402,260 L390,265 L380,258 Z"/>
-<path class="cp" id="c-THA" d="M475,142 L508,135 L515,158 L505,202 L478,212 L462,198 L462,172 L468,155 Z"/>
-<path class="cp" id="c-VNM" d="M508,135 L538,128 L545,152 L535,202 L510,215 L500,202 L505,172 L510,150 Z"/>
-<path class="cp" id="c-MYS" d="M482,215 L518,208 L522,228 L505,238 L482,235 L475,225 Z"/>
-<path class="cp" id="c-IDN" d="M490,252 L542,245 L552,262 L538,278 L498,282 L485,268 Z"/>
-<path class="cp" id="c-PHL" d="M535,162 L558,155 L562,178 L552,208 L532,215 L522,202 L526,178 Z"/>
-<path class="cp" id="c-CHN" d="M348,35 L485,28 L505,52 L508,100 L485,135 L450,145 L412,142 L382,122 L368,95 L355,65 Z"/>
-<path class="cp" id="c-MNG" d="M352,12 L485,8 L495,32 L485,52 L348,58 L342,35 Z"/>
-<path class="cp" id="c-KOR" d="M502,85 L525,82 L528,102 L512,112 L498,105 Z"/>
-<path class="cp" id="c-JPN" d="M525,65 L552,58 L558,78 L548,105 L528,110 L518,95 L520,75 Z"/>
-<path class="cp" id="c-KAZ2" d="M205,38 L212,18 L225,58 Z"/>
-<path class="cp" id="c-ISR2" d="M148,128 L155,108 L162,108 L162,128 Z"/>
-</svg>`,
-
-"North America":`<svg class="map-svg" viewBox="0 0 480 460" xmlns="http://www.w3.org/2000/svg" style="background:#B5D4F4">
-<path class="cp" id="c-CAN" d="M42,18 L368,15 L382,42 L375,102 L338,125 L272,135 L215,128 L158,135 L100,122 L48,102 L28,62 Z"/>
-<path class="cp" id="c-USA" d="M48,128 L342,122 L355,145 L345,222 L292,238 L208,245 L122,238 L55,218 L38,175 Z"/>
-<path class="cp" id="c-MEX" d="M55,238 L212,232 L228,252 L220,292 L188,315 L152,318 L108,302 L72,275 L55,255 Z"/>
-<path class="btn" id="c-CUB" style="fill:#C0DD97;stroke:#fff;stroke-width:1.2;cursor:pointer" d="M188,292 L255,285 L262,302 L248,315 L192,318 L182,308 Z"/>
-<path class="cp" id="c-HTI" d="M252,304 L275,302 L278,318 L262,325 L248,318 Z"/>
-<path class="cp" id="c-DOM" d="M274,302 L302,298 L305,315 L288,322 L272,318 Z"/>
-<path class="cp" id="c-JAM" d="M212,315 L235,312 L238,325 L222,330 L208,322 Z"/>
-<path class="cp" id="c-GTM" d="M122,315 L158,308 L162,328 L148,342 L122,338 L115,328 Z"/>
-<path class="cp" id="c-SLV" d="M122,338 L152,335 L155,348 L138,356 L120,350 Z"/>
-<path class="cp" id="c-HND" d="M142,340 L185,332 L190,350 L172,362 L142,358 L135,350 Z"/>
-<path class="cp" id="c-NIC" d="M152,360 L192,352 L195,372 L175,388 L148,385 L142,372 Z"/>
-<path class="cp" id="c-CRI" d="M155,385 L185,378 L188,398 L172,412 L152,405 Z"/>
-<path class="cp" id="c-PAN" d="M172,405 L218,397 L225,415 L208,428 L172,425 L165,415 Z"/>
-</svg>`,
-
-"South America":`<svg class="map-svg" viewBox="0 0 380 500" xmlns="http://www.w3.org/2000/svg" style="background:#B5D4F4">
-<path class="cp" id="c-COL" d="M72,45 L158,38 L168,62 L162,98 L122,112 L78,105 L60,82 Z"/>
-<path class="cp" id="c-VEN" d="M100,40 L188,32 L202,50 L198,78 L160,88 L118,82 L98,62 Z"/>
-<path class="cp" id="c-GUY" d="M188,40 L222,35 L228,58 L212,78 L190,75 L180,58 Z"/>
-<path class="cp" id="c-SUR" d="M218,38 L245,32 L252,55 L235,72 L215,70 L210,52 Z"/>
-<path class="cp" id="c-ECU" d="M48,88 L100,82 L108,110 L98,140 L60,145 L42,125 L44,102 Z"/>
-<path class="cp" id="c-PER" d="M46,125 L110,118 L120,145 L115,208 L78,232 L42,228 L25,192 L30,155 Z"/>
-<path class="cp" id="c-BOL" d="M110,145 L182,138 L192,158 L188,212 L148,228 L110,222 L100,195 L104,165 Z"/>
-<path class="cp" id="c-BRA" d="M158,38 L285,32 L308,56 L315,115 L300,180 L278,232 L238,262 L188,272 L152,258 L120,232 L110,212 L120,158 L135,118 L145,88 Z"/>
-<path class="cp" id="c-PRY" d="M170,215 L218,208 L222,242 L200,255 L170,252 L160,235 Z"/>
-<path class="cp" id="c-URY" d="M196,262 L242,255 L248,285 L225,305 L192,302 L182,278 Z"/>
-<path class="cp" id="c-ARG" d="M105,242 L248,235 L258,262 L252,342 L225,398 L188,422 L152,415 L115,382 L88,332 L85,282 Z"/>
-<path class="cp" id="c-CHL" d="M78,228 L120,222 L128,258 L118,342 L108,398 L85,412 L65,388 L58,315 L60,258 Z"/>
-</svg>`
-};
-
-const ACHIEVEMENTS=[
-  {id:"first_game",icon:"🎮",name:"First steps",desc:"Complete your first round",check:p=>p.gamesPlayed>=1},
-  {id:"perfect_round",icon:"💯",name:"Perfect round",desc:"100% accuracy in a round",check:p=>p.perfectRounds>=1},
-  {id:"streak5",icon:"🔥",name:"On fire",desc:"Get a 5-answer streak",check:p=>p.bestStreak>=5},
-  {id:"streak10",icon:"🌋",name:"Unstoppable",desc:"10-answer streak",check:p=>p.bestStreak>=10},
-  {id:"hard_win",icon:"💎",name:"Diamond mind",desc:"Score 80%+ on Hard",check:p=>p.hardHighScore>=80},
-  {id:"globe_trotter",icon:"🌐",name:"Globe trotter",desc:"Play all 5 continent sets",check:p=>(p.continentsPlayed||[]).length>=5},
-  {id:"century",icon:"✨",name:"Century",desc:"Earn 1000 total XP",check:p=>p.totalXP>=1000},
-  {id:"europe_master",icon:"🏰",name:"Europe expert",desc:"Score 90%+ on Europe",check:p=>(p.continentBest||{})['Europe']>=90},
-  {id:"africa_master",icon:"🌍",name:"Africa expert",desc:"Score 90%+ on Africa",check:p=>(p.continentBest||{})['Africa']>=90},
-  {id:"asia_master",icon:"🐉",name:"Asia expert",desc:"Score 90%+ on Asia",check:p=>(p.continentBest||{})['Asia']>=90},
-  {id:"games10",icon:"🎯",name:"Dedicated",desc:"Play 10 rounds",check:p=>p.gamesPlayed>=10},
-  {id:"americas",icon:"🦅",name:"Americas expert",desc:"90%+ on N or S America",check:p=>(p.continentBest||{})['North America']>=90||(p.continentBest||{})['South America']>=90},
+// ═══════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════
+const CONTINENTS = [
+  {id:'europe',   icon:'🇪🇺', name:'Europe',        color:'#DBEAFE'},
+  {id:'asia',     icon:'🌏', name:'Asia',           color:'#FEF3C7'},
+  {id:'africa',   icon:'🌍', name:'Africa',         color:'#FFEDD5'},
+  {id:'americas', icon:'🌎', name:'Americas',       color:'#DCFCE7'},
+  {id:'oceania',  icon:'🦘', name:'Oceania',        color:'#F3E8FF'},
+  {id:'world',    icon:'🌐', name:'World Mix',      color:'#F1F5F9'},
 ];
 
-const LEVELS=[
-  {level:1,title:"Explorer",avatar:"🌍",xpNeeded:100},
-  {level:2,title:"Traveller",avatar:"✈️",xpNeeded:250},
-  {level:3,title:"Navigator",avatar:"🧭",xpNeeded:500},
-  {level:4,title:"Geographer",avatar:"🗺️",xpNeeded:900},
-  {level:5,title:"Cartographer",avatar:"📍",xpNeeded:1400},
-  {level:6,title:"World Scholar",avatar:"🎓",xpNeeded:2000},
-  {level:7,title:"Continent Master",avatar:"🏆",xpNeeded:3000},
-  {level:8,title:"Geography Legend",avatar:"⭐",xpNeeded:999999},
+const COUNTRIES = {
+  europe:[
+    {id:'FR',name:'France',      flag:'🇫🇷',capital:'Paris',       iso:'FRA'},
+    {id:'DE',name:'Germany',     flag:'🇩🇪',capital:'Berlin',      iso:'DEU'},
+    {id:'IT',name:'Italy',       flag:'🇮🇹',capital:'Rome',        iso:'ITA'},
+    {id:'ES',name:'Spain',       flag:'🇪🇸',capital:'Madrid',      iso:'ESP'},
+    {id:'PL',name:'Poland',      flag:'🇵🇱',capital:'Warsaw',      iso:'POL'},
+    {id:'NL',name:'Netherlands', flag:'🇳🇱',capital:'Amsterdam',   iso:'NLD'},
+    {id:'BE',name:'Belgium',     flag:'🇧🇪',capital:'Brussels',    iso:'BEL'},
+    {id:'SE',name:'Sweden',      flag:'🇸🇪',capital:'Stockholm',   iso:'SWE'},
+    {id:'NO',name:'Norway',      flag:'🇳🇴',capital:'Oslo',        iso:'NOR'},
+    {id:'PT',name:'Portugal',    flag:'🇵🇹',capital:'Lisbon',      iso:'PRT'},
+    {id:'CH',name:'Switzerland', flag:'🇨🇭',capital:'Bern',        iso:'CHE'},
+    {id:'AT',name:'Austria',     flag:'🇦🇹',capital:'Vienna',      iso:'AUT'},
+    {id:'GR',name:'Greece',      flag:'🇬🇷',capital:'Athens',      iso:'GRC'},
+    {id:'CZ',name:'Czechia',     flag:'🇨🇿',capital:'Prague',      iso:'CZE'},
+    {id:'HU',name:'Hungary',     flag:'🇭🇺',capital:'Budapest',    iso:'HUN'},
+    {id:'RO',name:'Romania',     flag:'🇷🇴',capital:'Bucharest',   iso:'ROU'},
+    {id:'FI',name:'Finland',     flag:'🇫🇮',capital:'Helsinki',    iso:'FIN'},
+    {id:'DK',name:'Denmark',     flag:'🇩🇰',capital:'Copenhagen',  iso:'DNK'},
+    {id:'GB',name:'UK',          flag:'🇬🇧',capital:'London',      iso:'GBR'},
+    {id:'IE',name:'Ireland',     flag:'🇮🇪',capital:'Dublin',      iso:'IRL'},
+    {id:'HR',name:'Croatia',     flag:'🇭🇷',capital:'Zagreb',      iso:'HRV'},
+    {id:'SK',name:'Slovakia',    flag:'🇸🇰',capital:'Bratislava',  iso:'SVK'},
+    {id:'BG',name:'Bulgaria',    flag:'🇧🇬',capital:'Sofia',       iso:'BGR'},
+    {id:'RS',name:'Serbia',      flag:'🇷🇸',capital:'Belgrade',    iso:'SRB'},
+    {id:'UA',name:'Ukraine',     flag:'🇺🇦',capital:'Kyiv',        iso:'UKR'},
+  ],
+  asia:[
+    {id:'CN',name:'China',       flag:'🇨🇳',capital:'Beijing',     iso:'CHN'},
+    {id:'JP',name:'Japan',       flag:'🇯🇵',capital:'Tokyo',       iso:'JPN'},
+    {id:'IN',name:'India',       flag:'🇮🇳',capital:'New Delhi',   iso:'IND'},
+    {id:'KR',name:'South Korea', flag:'🇰🇷',capital:'Seoul',       iso:'KOR'},
+    {id:'TH',name:'Thailand',    flag:'🇹🇭',capital:'Bangkok',     iso:'THA'},
+    {id:'VN',name:'Vietnam',     flag:'🇻🇳',capital:'Hanoi',       iso:'VNM'},
+    {id:'PH',name:'Philippines', flag:'🇵🇭',capital:'Manila',      iso:'PHL'},
+    {id:'ID',name:'Indonesia',   flag:'🇮🇩',capital:'Jakarta',     iso:'IDN'},
+    {id:'MY',name:'Malaysia',    flag:'🇲🇾',capital:'Kuala Lumpur',iso:'MYS'},
+    {id:'PK',name:'Pakistan',    flag:'🇵🇰',capital:'Islamabad',   iso:'PAK'},
+    {id:'BD',name:'Bangladesh',  flag:'🇧🇩',capital:'Dhaka',       iso:'BGD'},
+    {id:'IR',name:'Iran',        flag:'🇮🇷',capital:'Tehran',      iso:'IRN'},
+    {id:'IQ',name:'Iraq',        flag:'🇮🇶',capital:'Baghdad',     iso:'IRQ'},
+    {id:'SA',name:'Saudi Arabia',flag:'🇸🇦',capital:'Riyadh',      iso:'SAU'},
+    {id:'TR',name:'Turkey',      flag:'🇹🇷',capital:'Ankara',      iso:'TUR'},
+    {id:'KZ',name:'Kazakhstan',  flag:'🇰🇿',capital:'Astana',      iso:'KAZ'},
+    {id:'UZ',name:'Uzbekistan',  flag:'🇺🇿',capital:'Tashkent',    iso:'UZB'},
+    {id:'AE',name:'UAE',         flag:'🇦🇪',capital:'Abu Dhabi',   iso:'ARE'},
+    {id:'IL',name:'Israel',      flag:'🇮🇱',capital:'Jerusalem',   iso:'ISR'},
+    {id:'TW',name:'Taiwan',      flag:'🇹🇼',capital:'Taipei',      iso:'TWN'},
+  ],
+  africa:[
+    {id:'NG',name:'Nigeria',     flag:'🇳🇬',capital:'Abuja',       iso:'NGA'},
+    {id:'ET',name:'Ethiopia',    flag:'🇪🇹',capital:'Addis Ababa', iso:'ETH'},
+    {id:'EG',name:'Egypt',       flag:'🇪🇬',capital:'Cairo',       iso:'EGY'},
+    {id:'ZA',name:'South Africa',flag:'🇿🇦',capital:'Pretoria',    iso:'ZAF'},
+    {id:'KE',name:'Kenya',       flag:'🇰🇪',capital:'Nairobi',     iso:'KEN'},
+    {id:'GH',name:'Ghana',       flag:'🇬🇭',capital:'Accra',       iso:'GHA'},
+    {id:'TZ',name:'Tanzania',    flag:'🇹🇿',capital:'Dodoma',      iso:'TZA'},
+    {id:'MA',name:'Morocco',     flag:'🇲🇦',capital:'Rabat',       iso:'MAR'},
+    {id:'DZ',name:'Algeria',     flag:'🇩🇿',capital:'Algiers',     iso:'DZA'},
+    {id:'TN',name:'Tunisia',     flag:'🇹🇳',capital:'Tunis',       iso:'TUN'},
+    {id:'SD',name:'Sudan',       flag:'🇸🇩',capital:'Khartoum',    iso:'SDN'},
+    {id:'CM',name:'Cameroon',    flag:'🇨🇲',capital:'Yaoundé',     iso:'CMR'},
+    {id:'SN',name:'Senegal',     flag:'🇸🇳',capital:'Dakar',       iso:'SEN'},
+    {id:'CI',name:"Côte d'Ivoire",flag:'🇨🇮',capital:'Yamoussoukro',iso:'CIV'},
+    {id:'AO',name:'Angola',      flag:'🇦🇴',capital:'Luanda',      iso:'AGO'},
+    {id:'MZ',name:'Mozambique',  flag:'🇲🇿',capital:'Maputo',      iso:'MOZ'},
+    {id:'UG',name:'Uganda',      flag:'🇺🇬',capital:'Kampala',     iso:'UGA'},
+    {id:'MG',name:'Madagascar',  flag:'🇲🇬',capital:'Antananarivo',iso:'MDG'},
+    {id:'ZM',name:'Zambia',      flag:'🇿🇲',capital:'Lusaka',      iso:'ZMB'},
+    {id:'ZW',name:'Zimbabwe',    flag:'🇿🇼',capital:'Harare',      iso:'ZWE'},
+  ],
+  americas:[
+    {id:'US',name:'USA',         flag:'🇺🇸',capital:'Washington DC',iso:'USA'},
+    {id:'CA',name:'Canada',      flag:'🇨🇦',capital:'Ottawa',      iso:'CAN'},
+    {id:'MX',name:'Mexico',      flag:'🇲🇽',capital:'Mexico City', iso:'MEX'},
+    {id:'BR',name:'Brazil',      flag:'🇧🇷',capital:'Brasília',    iso:'BRA'},
+    {id:'AR',name:'Argentina',   flag:'🇦🇷',capital:'Buenos Aires',iso:'ARG'},
+    {id:'CO',name:'Colombia',    flag:'🇨🇴',capital:'Bogotá',      iso:'COL'},
+    {id:'CL',name:'Chile',       flag:'🇨🇱',capital:'Santiago',    iso:'CHL'},
+    {id:'PE',name:'Peru',        flag:'🇵🇪',capital:'Lima',        iso:'PER'},
+    {id:'VE',name:'Venezuela',   flag:'🇻🇪',capital:'Caracas',     iso:'VEN'},
+    {id:'EC',name:'Ecuador',     flag:'🇪🇨',capital:'Quito',       iso:'ECU'},
+    {id:'BO',name:'Bolivia',     flag:'🇧🇴',capital:'Sucre',       iso:'BOL'},
+    {id:'CU',name:'Cuba',        flag:'🇨🇺',capital:'Havana',      iso:'CUB'},
+    {id:'HT',name:'Haiti',       flag:'🇭🇹',capital:'Port-au-Prince',iso:'HTI'},
+    {id:'UY',name:'Uruguay',     flag:'🇺🇾',capital:'Montevideo',  iso:'URY'},
+    {id:'PY',name:'Paraguay',    flag:'🇵🇾',capital:'Asunción',    iso:'PRY'},
+    {id:'GT',name:'Guatemala',   flag:'🇬🇹',capital:'Guatemala City',iso:'GTM'},
+    {id:'HN',name:'Honduras',    flag:'🇭🇳',capital:'Tegucigalpa', iso:'HND'},
+    {id:'CR',name:'Costa Rica',  flag:'🇨🇷',capital:'San José',    iso:'CRI'},
+    {id:'PA',name:'Panama',      flag:'🇵🇦',capital:'Panama City', iso:'PAN'},
+    {id:'DO',name:'Dom. Republic',flag:'🇩🇴',capital:'Santo Domingo',iso:'DOM'},
+  ],
+  oceania:[
+    {id:'AU',name:'Australia',   flag:'🇦🇺',capital:'Canberra',    iso:'AUS'},
+    {id:'NZ',name:'New Zealand', flag:'🇳🇿',capital:'Wellington',  iso:'NZL'},
+    {id:'PG',name:'Papua N.G.',  flag:'🇵🇬',capital:'Port Moresby',iso:'PNG'},
+    {id:'FJ',name:'Fiji',        flag:'🇫🇯',capital:'Suva',        iso:'FJI'},
+    {id:'SB',name:'Solomon Isl.',flag:'🇸🇧',capital:'Honiara',     iso:'SLB'},
+    {id:'VU',name:'Vanuatu',     flag:'🇻🇺',capital:'Port Vila',   iso:'VUT'},
+    {id:'WS',name:'Samoa',       flag:'🇼🇸',capital:'Apia',        iso:'WSM'},
+    {id:'KI',name:'Kiribati',    flag:'🇰🇮',capital:'South Tarawa',iso:'KIR'},
+    {id:'FM',name:'Micronesia',  flag:'🇫🇲',capital:'Palikir',     iso:'FSM'},
+    {id:'TO',name:'Tonga',       flag:'🇹🇴',capital:'Nukuʻalofa',  iso:'TON'},
+  ],
+};
+COUNTRIES.world = [...COUNTRIES.europe,...COUNTRIES.asia,...COUNTRIES.africa,...COUNTRIES.americas].sort(()=>Math.random()-.5);
+
+const DIFF = {easy:{count:5,xp:50},medium:{count:8,xp:100},hard:{count:12,xp:200}};
+const LEVELS = [
+  {name:'Explorer',min:0},
+  {name:'Wanderer',min:200},
+  {name:'Traveller',min:500},
+  {name:'Navigator',min:1000},
+  {name:'Cartographer',min:2000},
+  {name:'Geographer',min:3500},
+  {name:'World Scholar',min:5500},
+  {name:'Geography Legend',min:8000},
+];
+const ACHIEVEMENTS = [
+  {id:'first',icon:'🌟',name:'First Steps',desc:'Complete your first quiz'},
+  {id:'streak5',icon:'🔥',name:'On Fire',desc:'Get a 5-answer streak'},
+  {id:'streak10',icon:'💥',name:'Unstoppable',desc:'Get a 10-answer streak'},
+  {id:'perfect',icon:'💯',name:'Perfect Round',desc:'100% accuracy in a quiz'},
+  {id:'hard_win',icon:'🦁',name:'Brave Heart',desc:'Complete a Hard quiz'},
+  {id:'europe_exp',icon:'🏰',name:'Europe Expert',desc:'Play all European countries'},
+  {id:'asia_exp',icon:'🏯',name:'Asia Expert',desc:'Play all Asian countries'},
+  {id:'africa_exp',icon:'🦁',name:'Africa Expert',desc:'Play all African countries'},
+  {id:'globe_trotter',icon:'✈️',name:'Globe Trotter',desc:'Play all 5 regions'},
+  {id:'diamond',icon:'💎',name:'Diamond Mind',desc:'80%+ accuracy on Hard'},
+  {id:'10games',icon:'🎮',name:'Dedicated',desc:'Play 10 games'},
+  {id:'map_master',icon:'🗺️',name:'Map Master',desc:'Find 30 countries on the map'},
 ];
 
-let profile={gamesPlayed:0,totalScore:0,totalXP:0,totalCorrect:0,totalAnswers:0,bestStreak:0,perfectRounds:0,hardHighScore:0,continentsPlayed:[],continentBest:{},unlockedAchievements:[],leaderboard:[]};
-try{const s=localStorage.getItem('geoQuizV3');if(s)profile=Object.assign(profile,JSON.parse(s));}catch(e){}
-function saveProfile(){try{localStorage.setItem('geoQuizV3',JSON.stringify(profile));}catch(e){}}
+// ═══════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════
+let G = {
+  continent:null, diff:'easy',
+  queue:[], idx:0, step:0,
+  score:0, streak:0, maxStreak:0,
+  correctTotal:0, totalSteps:0,
+  mapIso:null,
+  topoReady:false, topoData:null
+};
+let S = JSON.parse(localStorage.getItem('geoS')||'{"xp":0,"played":0,"bestScore":0,"bestStreak":0,"lb":[],"ach":[],"played_conts":[],"map_finds":0}');
 
-let G={diff:'easy',continent:'',queue:[],idx:0,step:0,score:0,correct:0,total:0,streak:0,maxStreak:0};
+function saveState(){localStorage.setItem('geoS',JSON.stringify(S))}
+
+// ═══════════════════════════════════════════
+//  UI HELPERS
+// ═══════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200);
+}
 
 function getLevelInfo(xp){
-  for(let i=LEVELS.length-1;i>=0;i--){
-    const prev=i===0?0:LEVELS[i-1].xpNeeded;
-    if(i===0||xp>=prev) return{...LEVELS[i],prevXP:prev,nextXP:LEVELS[i].xpNeeded,progress:Math.min((xp-prev)/(LEVELS[i].xpNeeded-prev),1)};
-  }
-  return{...LEVELS[0],prevXP:0,nextXP:100,progress:xp/100};
+  let lv=0;
+  for(let i=0;i<LEVELS.length;i++) if(xp>=LEVELS[i].min) lv=i;
+  const next = lv<LEVELS.length-1 ? LEVELS[lv+1] : null;
+  const pct = next ? Math.min(100,((xp-LEVELS[lv].min)/(next.min-LEVELS[lv].min))*100) : 100;
+  return {name:LEVELS[lv].name, pct, xp, next};
 }
 
 function updateHomeUI(){
-  const li=getLevelInfo(profile.totalXP);
-  document.getElementById('home-level').textContent=li.level;
-  document.getElementById('home-title').textContent=li.title;
-  document.getElementById('home-xp-label').textContent=Math.round(profile.totalXP)+' / '+li.nextXP+' XP';
-  document.getElementById('home-level-fill').style.width=Math.round(li.progress*100)+'%';
-  document.getElementById('home-avatar').textContent=li.avatar;
-  document.getElementById('home-total-score').textContent=profile.totalScore.toLocaleString();
-  document.getElementById('home-games').textContent=profile.gamesPlayed;
-  document.getElementById('home-best-streak').textContent=profile.bestStreak;
-  document.getElementById('home-accuracy').textContent=profile.totalAnswers>0?Math.round(profile.totalCorrect/profile.totalAnswers*100)+'%':'-';
-  renderAchievements();renderLeaderboard();
+  document.getElementById('h-played').textContent = S.played;
+  document.getElementById('h-best').textContent = S.bestScore||'-';
+  document.getElementById('h-streak').textContent = S.bestStreak||0;
+  const lv = getLevelInfo(S.xp);
+  document.getElementById('h-level').textContent = lv.name;
+  document.getElementById('h-xp').textContent = lv.xp+' XP';
+  document.getElementById('h-xp-fill').style.width = lv.pct+'%';
+
+  // Continent cards
+  const grid = document.getElementById('cont-grid');
+  grid.innerHTML = CONTINENTS.map(c=>`
+    <div class="cont-card ${G.continent===c.id?'sel':''}" onclick="selectCont('${c.id}')">
+      <div class="cont-icon">${c.icon}</div>
+      <div class="cont-name">${c.name}</div>
+      <div class="cont-count">${c.id==='world'?'40+':((COUNTRIES[c.id]||[]).length)+' countries'}</div>
+    </div>`).join('');
+  renderLeaderboard();
+  renderAchievements();
 }
 
-function showHomeTab(tab){
-  ['play','achievements','leaderboard'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'block':'none');
-  document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('active',['play','achievements','leaderboard'][i]===tab));
+function selectCont(id){
+  G.continent=id;
+  updateHomeUI();
+  const btn=document.getElementById('start-btn');
+  btn.disabled=false;btn.textContent='Start Quiz →';
+}
+function setDiff(d){
+  G.diff=d;
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.toggle('active',b.dataset.d===d));
+}
+function confirmQuit(){
+  if(confirm('Quit this quiz?')) showScreen('s-home');
 }
 
+// ═══════════════════════════════════════════
+//  GAME FLOW
+// ═══════════════════════════════════════════
+function startGame(){
+  if(!G.continent) return;
+  const pool = [...(COUNTRIES[G.continent]||[])].sort(()=>Math.random()-.5);
+  const n = DIFF[G.diff].count;
+  G.queue = pool.slice(0,n);
+  G.idx=0; G.step=0; G.score=0; G.streak=0; G.maxStreak=0;
+  G.correctTotal=0; G.totalSteps=0;
+  showScreen('s-game');
+  showQuestion();
+  loadTopoData();
+}
+
+function showQuestion(){
+  const q = G.queue[G.idx];
+  if(!q) return finishGame();
+  G.step = 0;
+  const total = G.queue.length;
+  document.getElementById('g-prog').style.width = (G.idx/total*100)+'%';
+  document.getElementById('g-score').textContent = G.score;
+  renderStepDots(3);
+  showStep(0);
+}
+
+function renderStepDots(count){
+  const dots = document.getElementById('step-dots');
+  dots.innerHTML = Array.from({length:count},(_,i)=>`<div class="q-step-dot${i<G.step?' done':i===G.step?' active':''}"></div>`).join('');
+}
+
+function showStep(step){
+  G.step = step;
+  renderStepDots(3);
+  const q = G.queue[G.idx];
+  const card = document.getElementById('q-card');
+  const label = document.getElementById('q-label');
+  const content = document.getElementById('q-content');
+  const mapCard = document.getElementById('map-card');
+  const feedback = document.getElementById('feedback');
+  const nextBtn = document.getElementById('next-btn');
+  feedback.className='feedback-bar'; feedback.textContent='';
+  nextBtn.classList.remove('show');
+  card.style.display='block';
+  mapCard.style.display='none';
+
+  if(step===0){
+    label.textContent = 'STEP 1 OF 3 — Name the Country';
+    content.innerHTML = `
+      <div class="q-flag-big">${q.flag}</div>
+      <div class="q-question">Which country does this flag belong to?</div>
+      ${makeOptions(q,'name')}`;
+  } else if(step===1){
+    label.textContent = 'STEP 2 OF 3 — Capital City';
+    content.innerHTML = `
+      <div class="q-question">What is the capital of ${q.name}? ${q.flag}</div>
+      ${makeOptions(q,'capital')}`;
+  } else if(step===2){
+    label.textContent = 'STEP 3 OF 3 — Find on Map';
+    card.style.display='none';
+    mapCard.style.display='block';
+    renderMap(q);
+  }
+}
+
+function makeOptions(q, field){
+  const pool = COUNTRIES[G.continent]||COUNTRIES.europe;
+  let opts = [q];
+  const others = pool.filter(c=>c.id!==q.id).sort(()=>Math.random()-.5);
+  opts = opts.concat(others.slice(0,3)).sort(()=>Math.random()-.5);
+  return opts.map(o=>`
+    <button class="ans-btn" onclick="checkAnswer(this,'${o.id}','${q.id}','${field}')">
+      <span class="ans-icon">${field==='capital'?'🏛':o.flag}</span>
+      ${field==='capital'?o.capital:o.name}
+    </button>`).join('');
+}
+
+function checkAnswer(btn, chosen, correct, field){
+  if(btn.disabled) return;
+  document.querySelectorAll('.ans-btn').forEach(b=>b.disabled=true);
+  G.totalSteps++;
+  const isCorrect = chosen === correct;
+  const feedback = document.getElementById('feedback');
+  const nextBtn = document.getElementById('next-btn');
+  const q = G.queue[G.idx];
+
+  if(isCorrect){
+    btn.classList.add('correct');
+    btn.innerHTML = '✅ ' + btn.innerHTML;
+    G.score += G.streak>=5?200:G.streak>=3?150:100;
+    G.streak++;
+    G.maxStreak = Math.max(G.maxStreak, G.streak);
+    G.correctTotal++;
+    feedback.className='feedback-bar correct';
+    feedback.innerHTML = `✅ Correct! ${G.streak>=3?`🔥 ${G.streak}-streak!`:''}`;
+  } else {
+    btn.classList.add('wrong');
+    G.streak=0;
+    // reveal correct
+    document.querySelectorAll('.ans-btn').forEach(b=>{
+      const id = b.getAttribute('onclick')?.match(/'([^']+)','[^']+'/)?.[1];
+      if(id===correct) b.classList.add('reveal');
+    });
+    const correctVal = field==='name'?q.name:q.capital;
+    feedback.className='feedback-bar wrong';
+    feedback.innerHTML = `❌ The answer was <b>${correctVal}</b>`;
+  }
+
+  // Update streak badge
+  const badge = document.getElementById('g-streak');
+  if(G.streak>=3){badge.textContent=`🔥 ${G.streak}`;badge.classList.add('show')}
+  else badge.classList.remove('show');
+  document.getElementById('g-score').textContent = G.score;
+
+  nextBtn.textContent = G.step<2 ? 'Continue →' : 'Next Country →';
+  nextBtn.classList.add('show');
+}
+
+function nextStep(){
+  if(G.step<2){
+    showStep(G.step+1);
+  } else {
+    G.idx++;
+    showQuestion();
+  }
+}
+
+// ═══════════════════════════════════════════
+//  MAP
+// ═══════════════════════════════════════════
+// Country ISO mapping for TopoJSON (numeric UN codes used in world-110m)
+const ISO_NUM = {
+  'FRA':250,'DEU':276,'ITA':380,'ESP':724,'POL':616,'NLD':528,'BEL':56,'SWE':752,
+  'NOR':578,'PRT':620,'CHE':756,'AUT':40,'GRC':300,'CZE':203,'HUN':348,'ROU':642,
+  'FIN':246,'DNK':208,'GBR':826,'IRL':372,'HRV':191,'SVK':703,'BGR':100,'SRB':688,
+  'UKR':804,'CHN':156,'JPN':392,'IND':356,'KOR':410,'THA':764,'VNM':704,'PHL':608,
+  'IDN':360,'MYS':458,'PAK':586,'BGD':50,'IRN':364,'IRQ':368,'SAU':682,'TUR':792,
+  'KAZ':398,'UZB':860,'ARE':784,'ISR':376,'TWN':158,'NGA':566,'ETH':231,'EGY':818,
+  'ZAF':710,'KEN':404,'GHA':288,'TZA':834,'MAR':504,'DZA':12,'TUN':788,'SDN':729,
+  'CMR':120,'SEN':686,'CIV':384,'AGO':24,'MOZ':508,'UGA':800,'MDG':450,'ZMB':894,
+  'ZWE':716,'USA':840,'CAN':124,'MEX':484,'BRA':76,'ARG':32,'COL':170,'CHL':152,
+  'PER':604,'VEN':862,'ECU':218,'BOL':68,'CUB':192,'HTI':332,'URY':858,'PRY':600,
+  'GTM':320,'HND':340,'CRI':188,'PAN':591,'DOM':214,'AUS':36,'NZL':554,'PNG':598,
+  'FJI':242,'SLB':90,'VUT':548,'WSM':882,'KIR':296,'FSM':583,'TON':776
+};
+
+// Continent bounding boxes [x0,y0,width,height] in natural earth projection space for clipping
+// We use a world topojson and filter + project per continent
+const CONT_PROJ = {
+  europe:   {scale:800, center:[15,54]},
+  asia:     {scale:280, center:[100,40]},
+  africa:   {scale:340, center:[20,5]},
+  americas: {scale:220, center:[-75,10]},
+  oceania:  {scale:430, center:[155,-25]},
+  world:    {scale:145, center:[0,20]},
+};
+
+let topoCache = null;
+
+function loadTopoData(){
+  if(topoCache){G.topoData=topoCache;G.topoReady=true;return;}
+  // Try fetching Natural Earth TopoJSON
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json')
+    .then(r=>r.json())
+    .then(data=>{topoCache=data;G.topoData=data;G.topoReady=true;
+      // If map is showing, re-render
+      if(document.getElementById('map-card').style.display!=='none'){
+        renderMap(G.queue[G.idx]);
+      }
+    })
+    .catch(()=>{G.topoReady=false;G.topoData=null;});
+}
+
+function renderMap(q){
+  const container = document.getElementById('map-container');
+  const hint = document.getElementById('map-hint');
+  const nextBtn = document.getElementById('next-btn');
+
+  container.innerHTML = `<div class="map-loading"><div class="spinner"></div>Loading map…</div>`;
+  hint.textContent = 'Tap the correct country on the map';
+
+  // Get quiz country ISO numbers for highlighting
+  const quizIsos = G.queue.map(c=>ISO_NUM[c.iso]).filter(Boolean);
+  const targetIso = ISO_NUM[q.iso];
+
+  // Wait a tick for topo data
+  const tryRender = (attempts) => {
+    if(G.topoData){
+      doRenderMap(q, quizIsos, targetIso, container, hint, nextBtn);
+    } else if(attempts > 0){
+      setTimeout(()=>tryRender(attempts-1), 300);
+    } else {
+      renderFallbackMap(q, container, hint, nextBtn);
+    }
+  };
+  tryRender(15);
+}
+
+function doRenderMap(q, quizIsos, targetIso, container, hint, nextBtn){
+  const W=440, H=320;
+  const cont = G.continent;
+  const proj = CONT_PROJ[cont]||CONT_PROJ.world;
+
+  // Build SVG path using simple Mercator-ish projection
+  // We use the TopoJSON feature data
+  const topo = G.topoData;
+  let countries;
+  try {
+    // topojson-client via CDN
+    countries = window.topojson.feature(topo, topo.objects.countries).features;
+  } catch(e){
+    renderFallbackMap(q, container, hint, nextBtn);
+    return;
+  }
+
+  // Filter to continent if not world
+  const contFilter = getContFilter(cont);
+  const visible = countries.filter(f => {
+    const id = +f.id;
+    if(cont==='world') return true;
+    return contFilter.has(id);
+  });
+
+  // Build d3 path
+  let projection;
+  try {
+    projection = d3.geoNaturalEarth1 ? d3.geoNaturalEarth1() : d3.geoMercator();
+  } catch(e){
+    renderFallbackMap(q, container, hint, nextBtn);
+    return;
+  }
+  
+  projection.scale(proj.scale).center(proj.center).translate([W/2, H/2]);
+  const path = d3.geoPath().projection(projection);
+
+  let svgPaths = visible.map(f=>{
+    const id = +f.id;
+    const isQuiz = quizIsos.includes(id);
+    const isTarget = id===targetIso;
+    let cls = 'country';
+    if(isQuiz) cls += ' quiz-country';
+    const d = path(f);
+    if(!d) return '';
+    return `<path class="${cls}" data-id="${id}" d="${d}"/>`;
+  }).join('');
+
+  container.innerHTML = `<svg id="map-svg" viewBox="0 0 ${W} ${H}">
+    <rect width="${W}" height="${H}" fill="#C8E6F5" rx="8"/>
+    ${svgPaths}
+  </svg>`;
+
+  // Add click handlers
+  container.querySelectorAll('.country').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const clickedId = +el.dataset.id;
+      handleMapClick(clickedId, targetIso, q, hint, nextBtn);
+    });
+  });
+}
+
+function getContFilter(cont){
+  const s = new Set();
+  if(cont==='world') return s;
+  (COUNTRIES[cont]||[]).forEach(c=>{
+    const n = ISO_NUM[c.iso];
+    if(n) s.add(n);
+  });
+  // Also add non-quiz neighbours for context — use large predefined sets
+  const NEIGHBOURS = {
+    europe: [250,276,380,724,616,528,56,752,578,620,756,40,300,203,348,642,246,208,826,372,191,703,100,688,804,705,840,124,642,498,112,440,233,428,440,528,56,40,705,891,807,8,70,20,492,470,352,208,826],
+    asia: [156,392,356,410,764,704,608,360,458,586,50,364,368,682,792,398,860,784,376,158,704,116,418,104,404,694,144,634,512,414,400,51,31,268,762,795,4,50,418,608,116,764],
+    africa: [566,231,818,710,404,288,834,504,12,788,729,120,686,384,24,508,800,450,894,716,706,174,690,646,516,624,426,748,144,266,654,148,562,466,478,478,686,585,4],
+    americas: [840,124,484,76,32,170,152,604,862,218,68,192,332,858,600,320,340,188,591,214,388,052,028,214,630,660,010],
+    oceania: [36,554,598,242,90,548,882,296,583,776,520,184,570,574],
+  };
+  (NEIGHBOURS[cont]||[]).forEach(id=>s.add(id));
+  return s;
+}
+
+function handleMapClick(clickedId, targetId, q, hint, nextBtn){
+  const svg = document.getElementById('map-svg');
+  if(!svg) return;
+  // Already answered?
+  if(svg.dataset.answered) return;
+  svg.dataset.answered='1';
+
+  // Mark all unclickable
+  svg.querySelectorAll('.country').forEach(p=>p.style.pointerEvents='none');
+
+  const isCorrect = clickedId===targetId;
+  G.totalSteps++;
+
+  if(isCorrect){
+    svg.querySelector(`[data-id="${clickedId}"]`)?.classList.add('correct');
+    G.score += G.streak>=5?200:G.streak>=3?150:100;
+    G.streak++;
+    G.maxStreak=Math.max(G.maxStreak,G.streak);
+    G.correctTotal++;
+    S.map_finds = (S.map_finds||0)+1;
+    hint.innerHTML='✅ Correct! Well done!';
+    hint.style.color='#16A34A';
+  } else {
+    svg.querySelector(`[data-id="${clickedId}"]`)?.classList.add('wrong');
+    svg.querySelector(`[data-id="${targetId}"]`)?.classList.add('reveal');
+    G.streak=0;
+    hint.innerHTML=`❌ That's not right — the correct country is highlighted in green`;
+    hint.style.color='#DC2626';
+  }
+
+  const badge = document.getElementById('g-streak');
+  if(G.streak>=3){badge.textContent=`🔥 ${G.streak}`;badge.classList.add('show')}
+  else badge.classList.remove('show');
+  document.getElementById('g-score').textContent = G.score;
+
+  nextBtn.textContent='Next Country →';
+  nextBtn.classList.add('show');
+}
+
+// Fallback map when CDN fails — text-based option list
+function renderFallbackMap(q, container, hint, nextBtn){
+  const pool = G.queue.filter(c=>c.id!==q.id).sort(()=>Math.random()-.5).slice(0,3);
+  const opts = [q,...pool].sort(()=>Math.random()-.5);
+  container.innerHTML = `
+    <div style="padding:8px 0">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">Find ${q.name} ${q.flag}</div>
+      ${opts.map(o=>`<button class="ans-btn" onclick="checkFallbackMap(this,'${o.id}','${q.id}')">
+        <span class="ans-icon">${o.flag}</span>${o.name}</button>`).join('')}
+    </div>`;
+  hint.textContent='';
+}
+function checkFallbackMap(btn, chosen, correct){
+  if(btn.disabled) return;
+  document.querySelectorAll('#map-container .ans-btn').forEach(b=>b.disabled=true);
+  const q=G.queue[G.idx];
+  G.totalSteps++;
+  const isCorrect = chosen===correct;
+  const hint = document.getElementById('map-hint');
+  const nextBtn = document.getElementById('next-btn');
+  if(isCorrect){
+    btn.classList.add('correct');
+    G.score+=100; G.streak++; G.maxStreak=Math.max(G.maxStreak,G.streak); G.correctTotal++;
+    hint.innerHTML='✅ Correct!'; hint.style.color='#16A34A';
+  } else {
+    btn.classList.add('wrong');
+    document.querySelectorAll('#map-container .ans-btn').forEach(b=>{
+      if(b.getAttribute('onclick')?.includes(`'${correct}'`)) b.classList.add('reveal');
+    });
+    G.streak=0; hint.innerHTML='❌ Wrong!'; hint.style.color='#DC2626';
+  }
+  const badge=document.getElementById('g-streak');
+  if(G.streak>=3){badge.textContent=`🔥 ${G.streak}`;badge.classList.add('show')}
+  else badge.classList.remove('show');
+  document.getElementById('g-score').textContent=G.score;
+  nextBtn.textContent='Next Country →'; nextBtn.classList.add('show');
+}
+
+// ═══════════════════════════════════════════
+//  FINISH
+// ═══════════════════════════════════════════
+function finishGame(){
+  const total = G.queue.length * 3;
+  const pct = G.totalSteps>0 ? Math.round((G.correctTotal/G.totalSteps)*100) : 0;
+  const stars = pct>=90?3:pct>=60?2:1;
+  const xpEarned = Math.round(DIFF[G.diff].xp * (pct/100) * (G.diff==='hard'?2:1));
+
+  S.xp += xpEarned;
+  S.played++;
+  if(G.score>S.bestScore) S.bestScore=G.score;
+  if(G.maxStreak>S.bestStreak) S.bestStreak=G.maxStreak;
+  if(!S.played_conts) S.played_conts=[];
+  if(!S.played_conts.includes(G.continent)) S.played_conts.push(G.continent);
+
+  // Leaderboard
+  if(!S.lb) S.lb=[];
+  S.lb.push({score:G.score, cont:G.continent, diff:G.diff, date:new Date().toLocaleDateString()});
+  S.lb.sort((a,b)=>b.score-a.score);
+  S.lb=S.lb.slice(0,15);
+
+  checkAchievements(pct);
+  saveState();
+
+  // Results screen
+  document.getElementById('res-stars').textContent='⭐'.repeat(stars);
+  const titles=['Keep Practicing!','Good Job!','Excellent!','Geography Master!'];
+  document.getElementById('res-title').textContent=titles[stars];
+  document.getElementById('res-sub').textContent=`You scored ${G.score} points with ${pct}% accuracy`;
+  document.getElementById('res-score').textContent=G.score;
+  document.getElementById('res-acc').textContent=pct+'%';
+  document.getElementById('res-xp').textContent='+'+xpEarned;
+
+  document.getElementById('res-breakdown').innerHTML=G.queue.map(q=>
+    `<div class="bk-row"><span class="bk-flag">${q.flag}</span><span class="bk-name">${q.name}</span><span class="bk-score">${q.capital}</span></div>`
+  ).join('');
+
+  showScreen('s-result');
+  if(stars===3) setTimeout(launchConfetti,400);
+}
+
+// ═══════════════════════════════════════════
+//  LEADERBOARD
+// ═══════════════════════════════════════════
+function renderLeaderboard(){
+  const lb = S.lb||[];
+  const el = document.getElementById('lb-list');
+  if(!lb.length){el.innerHTML='<div style="padding:14px;text-align:center;color:var(--sub);font-size:13px">No games yet — play first!</div>';return;}
+  el.innerHTML=lb.map((e,i)=>`
+    <div class="lb-row">
+      <div class="lb-rank${i<3?' gold':''}">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</div>
+      <div class="lb-name">${e.cont} · ${e.diff}</div>
+      <div style="font-size:11px;color:var(--sub)">${e.date}</div>
+      <div class="lb-pts">${e.score}</div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════
+//  ACHIEVEMENTS
+// ═══════════════════════════════════════════
+function checkAchievements(pct){
+  if(!S.ach) S.ach=[];
+  const unlock=(id)=>{if(!S.ach.includes(id)){S.ach.push(id);showToast('🎖 Achievement: '+ACHIEVEMENTS.find(a=>a.id===id)?.name);}};
+  if(S.played>=1) unlock('first');
+  if(G.maxStreak>=5) unlock('streak5');
+  if(G.maxStreak>=10) unlock('streak10');
+  if(pct===100) unlock('perfect');
+  if(G.diff==='hard') unlock('hard_win');
+  if(G.continent==='europe') unlock('europe_exp');
+  if(G.continent==='asia') unlock('asia_exp');
+  if(G.continent==='africa') unlock('africa_exp');
+  if((S.played_conts||[]).length>=5) unlock('globe_trotter');
+  if(G.diff==='hard'&&pct>=80) unlock('diamond');
+  if(S.played>=10) unlock('10games');
+  if((S.map_finds||0)>=30) unlock('map_master');
+}
 function renderAchievements(){
-  document.getElementById('ach-grid').innerHTML=ACHIEVEMENTS.map(a=>`
-    <div class="ach-card ${profile.unlockedAchievements.includes(a.id)?'unlocked':''}">
+  const el=document.getElementById('ach-grid');
+  el.innerHTML=ACHIEVEMENTS.map(a=>`
+    <div class="ach-card${(S.ach||[]).includes(a.id)?' unlocked':''}">
       <div class="ach-icon">${a.icon}</div>
       <div class="ach-name">${a.name}</div>
       <div class="ach-desc">${a.desc}</div>
     </div>`).join('');
 }
 
-function renderLeaderboard(){
-  const lb=profile.leaderboard||[];
-  document.getElementById('lb-empty').style.display=lb.length?'none':'block';
-  document.getElementById('lb-rows').innerHTML=lb.map((e,i)=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);font-size:13px">
-      <span style="width:22px;color:#888;font-size:12px">${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.'}</span>
-      <span style="flex:1">${e.continent}</span>
-      <span class="badge badge-${e.diff}">${e.diff}</span>
-      <span style="font-size:11px;color:#888;margin:0 4px">${e.acc}%</span>
-      <span style="font-weight:500">${e.score}</span>
-    </div>`).join('');
-}
-
-function checkAchievements(){
-  const n=[];
-  ACHIEVEMENTS.forEach(a=>{if(!profile.unlockedAchievements.includes(a.id)&&a.check(profile)){profile.unlockedAchievements.push(a.id);n.push(a);}});
-  return n;
-}
-
-function setDiff(d){G.diff=d;['easy','medium','hard'].forEach(x=>document.getElementById('d-'+x).classList.toggle('active',x===d));}
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function showHome(){updateHomeUI();showScreen('s-home');}
-function shuffle(arr){return arr.slice().sort(()=>Math.random()-0.5);}
-
-function startQuiz(continent){
-  G.continent=continent;
-  let pool=continent==='All'?Object.values(COUNTRIES).flat():COUNTRIES[continent]||[];
-  G.queue=shuffle(pool).slice(0,10);
-  G.idx=0;G.step=0;G.score=0;G.correct=0;G.total=0;G.streak=0;G.maxStreak=0;
-  document.getElementById('q-cont-disp').textContent=continent;
-  document.getElementById('q-total').textContent=G.queue.length;
-  document.getElementById('q-score').textContent='0';
-  document.getElementById('q-streak-hud').style.display='none';
-  showScreen('s-quiz');
-  renderQuestion();
-}
-
-function renderQuestion(){
-  document.getElementById('q-num').textContent=G.idx+1;
-  document.getElementById('q-progress').style.width=Math.round((G.idx/G.queue.length)*100)+'%';
-  G.step=0;renderStep();
-}
-
-function renderStep(){
-  const q=G.queue[G.idx];
-  document.getElementById('step-dots').innerHTML=[0,1,2].map(i=>
-    `<div class="step-dot ${i<G.step?'done':i===G.step?'active':''}"></div>`).join('');
-  document.getElementById('next-btn').style.display='none';
-  const body=document.getElementById('q-body');
-  if(G.step===0)renderFlagStep(q,body);
-  else if(G.step===1)renderCapitalStep(q,body);
-  else renderMapStep(q,body);
-}
-
-function getPool(){return G.continent==='All'?Object.values(COUNTRIES).flat():(COUNTRIES[G.continent]||[]);}
-function getOptions(field,correct,n){
-  return shuffle([correct,...shuffle(getPool().filter(c=>c[field]!==correct)).slice(0,n-1).map(c=>c[field])]);
-}
-
-function renderFlagStep(q,body){
-  body.innerHTML=`<div class="card" style="text-align:center">
-    <p style="font-size:12px;color:#888;margin-bottom:4px">Step 1 — What country is this flag?</p>
-    <div class="flag-box">${q.flag}</div></div><div id="ans-area"></div>`;
-  renderAnswerArea('name',q);
-}
-
-function renderCapitalStep(q,body){
-  body.innerHTML=`<div class="card" style="text-align:center">
-    <p style="font-size:12px;color:#888;margin-bottom:4px">Step 2 — Capital of ${q.name}?</p>
-    <div style="font-size:38px;margin:6px 0">${q.flag}</div>
-    <p style="font-size:15px;font-weight:500">${q.name}</p></div><div id="ans-area"></div>`;
-  renderAnswerArea('capital',q);
-}
-
-function renderAnswerArea(field,q){
-  const cont=document.getElementById('ans-area');
-  if(G.diff==='hard'){
-    cont.innerHTML=`<input type="text" id="hi" placeholder="Type your answer..." style="width:100%;margin-bottom:8px">
-      <button class="btn btn-primary" onclick="checkHard('${field}','${(field==='name'?q.name:q.capital).replace(/'/g,"\\'")}')">Check</button>`;
-    setTimeout(()=>{const e=document.getElementById('hi');if(e)e.focus();},50);return;
+// ═══════════════════════════════════════════
+//  CONFETTI
+// ═══════════════════════════════════════════
+function launchConfetti(){
+  const colors=['#2563EB','#16A34A','#D97706','#DC2626','#7C3AED','#0891B2'];
+  for(let i=0;i<50;i++){
+    const el=document.createElement('div');
+    el.className='confetti-p';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-12px;background:${colors[i%colors.length]};transform:rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(el);
+    el.animate([{transform:`translateY(0) rotate(0) scale(1)`,opacity:1},{transform:`translateY(${300+Math.random()*300}px) rotate(${720+Math.random()*360}deg) scale(0.5)`,opacity:0}],
+      {duration:1400+Math.random()*800,easing:'ease-in'}).onfinish=()=>el.remove();
   }
-  const n=G.diff==='medium'?6:4;
-  cont.innerHTML=getOptions(field,q[field],n).map(o=>
-    `<button class="btn" onclick="checkChoice(this,'${o.replace(/'/g,"\\'")}','${q[field].replace(/'/g,"\\'")}','${field}')">${o}</button>`).join('');
 }
 
-function renderMapStep(q,body){
-  const continent=G.continent==='All'?'All':G.continent;
-  const mapSVG=continent==='All'?MAPS['Europe']:MAPS[continent];
-  const quizISOs=new Set(G.queue.map(c=>c.iso));
-
-  body.innerHTML=`<div class="card" style="padding:10px 12px">
-    <p style="font-size:12px;color:#888;margin-bottom:2px">Step 3 — Click on <b style="color:#1a1a1a">${q.name}</b></p>
-    <p style="font-size:12px;color:#666">${q.flag} Capital: ${q.capital}</p>
-  </div>
-  <div id="map-holder">${mapSVG||''}</div>
-  <div id="map-feedback" style="font-size:13px;color:#666;min-height:22px;padding:4px 0 8px"></div>`;
-
-  if(!mapSVG){
-    document.getElementById('map-holder').innerHTML=`<div style="padding:20px;text-align:center;font-size:13px;color:#888;background:#f5f4f0;border-radius:10px;margin-bottom:10px">Map not available for "All continents" mix — <button class="btn btn-primary" style="width:auto;display:inline-flex;margin-top:8px" onclick="skipMapStep()">Skip step</button></div>`;
-    return;
-  }
-
-  const svg=document.querySelector('#map-holder .map-svg');
-  if(!svg)return;
-  svg.querySelectorAll('.cp').forEach(p=>{
-    const iso=p.id.replace('c-','');
-    if(!quizISOs.has(iso)){p.classList.add('dimmed');}
-    else{
-      p.addEventListener('click',()=>handleMapClick(iso,q.iso,p,svg));
-    }
+// ═══════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════
+// Load D3 + topojson from CDN dynamically
+function loadScript(src, cb){
+  const s=document.createElement('script');s.src=src;s.onload=cb;s.onerror=cb;document.head.appendChild(s);
+}
+loadScript('https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js',()=>{
+  loadScript('https://cdn.jsdelivr.net/npm/d3-geo@3/dist/d3-geo.min.js',()=>{
+    // Ready
   });
-}
-
-function skipMapStep(){handleAnswer(false,'map','(skipped)');}
-
-function handleMapClick(clickedISO,targetISO,clickedPath,svg){
-  if(svg.dataset.answered)return;
-  svg.dataset.answered='1';
-  svg.querySelectorAll('.cp:not(.dimmed)').forEach(p=>{p.style.pointerEvents='none';});
-  const ok=clickedISO===targetISO;
-  clickedPath.classList.add(ok?'correct-flash':'wrong-flash');
-  if(!ok){
-    const correct=svg.querySelector('#c-'+targetISO);
-    if(correct){correct.classList.remove('dimmed');correct.classList.add('reveal-flash');}
-  }
-  const fb=document.getElementById('map-feedback');
-  if(fb)fb.innerHTML=ok
-    ?`<span style="color:#0F6E56">✓ Correct! That's ${G.queue[G.idx].name}.</span>`
-    :`<span style="color:#A32D2D">✗ Wrong — the green country is ${G.queue[G.idx].name}.</span>`;
-  handleAnswer(ok,'map',G.queue[G.idx].name);
-}
-
-function checkChoice(btn,chosen,correct,field){
-  btn.parentNode.querySelectorAll('button').forEach(b=>b.disabled=true);
-  const ok=chosen===correct;
-  btn.classList.add(ok?'correct':'wrong');
-  if(!ok)btn.parentNode.querySelectorAll('button').forEach(b=>{if(b.textContent.trim()===correct)b.classList.add('reveal');});
-  handleAnswer(ok,field,correct);
-}
-function checkHard(field,correct){
-  const input=document.getElementById('hi');if(!input)return;
-  const ok=input.value.trim().toLowerCase()===correct.toLowerCase();
-  input.disabled=true;input.style.background=ok?'#E1F5EE':'#FCEBEB';input.style.color=ok?'#0F6E56':'#A32D2D';
-  handleAnswer(ok,field,correct);
-}
-
-function handleAnswer(ok,field,correct){
-  G.total++;
-  if(ok){G.correct++;G.streak++;if(G.streak>G.maxStreak)G.maxStreak=G.streak;}else G.streak=0;
-  if(G.streak===5)showToast('🔥 5 in a row!');
-  if(G.streak===10)showToast('🌋 10 streak! Unstoppable!');
-  const hud=document.getElementById('q-streak-hud');
-  if(G.streak>=2){hud.style.display='';document.getElementById('q-streak-val').textContent=G.streak;}else hud.style.display='none';
-  const base=G.diff==='easy'?10:G.diff==='medium'?15:20;
-  const bonus=ok?Math.min(G.streak-1,4)*2:0;
-  G.score+=ok?base+bonus:0;
-  document.getElementById('q-score').textContent=G.score;
-  if(field!=='map'){
-    const fb=document.createElement('div');
-    fb.className='feedback '+(ok?'good':'bad');
-    const sm=ok&&G.streak>=3?` (${G.streak}x streak +${bonus})`:'';
-    fb.innerHTML=ok?`✓ Correct!${sm}`:`✗ Answer: <b>${correct}</b>`;
-    const body=document.getElementById('q-body');
-    const ex=body.querySelector('.feedback');if(ex)ex.remove();
-    body.appendChild(fb);
-  }
-  document.getElementById('next-btn').style.display='block';
-}
-
-function nextStep(){
-  G.step++;
-  if(G.step>2){G.idx++;if(G.idx>=G.queue.length){endRound();return;}renderQuestion();}
-  else renderStep();
-}
-
-function calcStars(acc,diff){
-  if(diff==='easy')return acc>=90?3:acc>=70?2:acc>=50?1:0;
-  if(diff==='medium')return acc>=85?3:acc>=65?2:acc>=45?1:0;
-  return acc>=80?3:acc>=60?2:acc>=40?1:0;
-}
-
-function endRound(){
-  const acc=G.total>0?Math.round(G.correct/G.total*100):0;
-  const stars=calcStars(acc,G.diff);
-  const xpEarned=Math.round(G.score*0.5*(G.diff==='easy'?1:G.diff==='medium'?1.5:2));
-  profile.gamesPlayed++;profile.totalScore+=G.score;profile.totalXP+=xpEarned;
-  profile.totalCorrect+=G.correct;profile.totalAnswers+=G.total;
-  if(G.maxStreak>profile.bestStreak)profile.bestStreak=G.maxStreak;
-  if(acc===100)profile.perfectRounds++;
-  if(G.diff==='hard'&&acc>profile.hardHighScore)profile.hardHighScore=acc;
-  if(!profile.continentsPlayed.includes(G.continent))profile.continentsPlayed.push(G.continent);
-  if(!profile.continentBest)profile.continentBest={};
-  if(!profile.continentBest[G.continent]||acc>profile.continentBest[G.continent])profile.continentBest[G.continent]=acc;
-  profile.leaderboard.push({continent:G.continent,diff:G.diff,score:G.score,acc,date:new Date().toLocaleDateString()});
-  profile.leaderboard.sort((a,b)=>b.score-a.score);profile.leaderboard=profile.leaderboard.slice(0,15);
-  const newAchs=checkAchievements();saveProfile();
-
-  document.getElementById('res-score').textContent=G.score;
-  document.getElementById('res-acc').textContent=acc+'%';
-  document.getElementById('res-streak').textContent=G.maxStreak;
-  document.getElementById('res-xp').textContent='+'+xpEarned+' XP';
-  const dm={easy:'badge-easy',medium:'badge-medium',hard:'badge-hard'};
-  document.getElementById('res-sub').innerHTML=`${G.continent} · <span class="badge ${dm[G.diff]}">${G.diff}</span>`;
-
-  const b=document.getElementById('result-award-banner');
-  if(stars===3){b.className='award-banner gold';b.innerHTML=`<div style="font-size:36px">🏆</div><div style="font-size:18px;font-weight:500;color:#633806;margin-top:4px">Gold — Perfect!</div><div style="font-size:12px;color:#854F0B">${acc}% · ${G.maxStreak} streak</div>`;}
-  else if(stars===2){b.className='award-banner silver';b.innerHTML=`<div style="font-size:36px">🥈</div><div style="font-size:18px;font-weight:500;color:#444;margin-top:4px">Silver — Great job!</div><div style="font-size:12px;color:#666">${acc}% accuracy</div>`;}
-  else if(stars===1){b.className='award-banner bronze';b.innerHTML=`<div style="font-size:36px">🥉</div><div style="font-size:18px;font-weight:500;color:#712B13;margin-top:4px">Bronze — Keep going!</div><div style="font-size:12px;color:#993C1D">${acc}% accuracy</div>`;}
-  else{b.className='award-banner none';b.innerHTML=`<div style="font-size:28px">📚</div><div style="font-size:16px;font-weight:500;color:#444;margin-top:4px">Keep practising!</div>`;}
-
-  document.getElementById('result-stars').innerHTML=[1,2,3].map(i=>`<span class="star" id="rstar${i}">⭐</span>`).join('');
-  [1,2,3].forEach(i=>{if(i<=stars)setTimeout(()=>{const s=document.getElementById('rstar'+i);if(s)s.classList.add('earned');},i*300);});
-
-  document.getElementById('new-achievements').innerHTML=newAchs.length?`
-    <div style="background:#FAEEDA;border-radius:10px;padding:10px 12px;margin-bottom:8px">
-      <div style="font-size:12px;font-weight:500;color:#633806;margin-bottom:6px">🏆 New achievements!</div>
-      ${newAchs.map(a=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#854F0B;margin-bottom:4px"><span style="font-size:18px">${a.icon}</span><b>${a.name}</b> — ${a.desc}</div>`).join('')}
-    </div>`:'';
-
-  document.getElementById('res-breakdown').innerHTML=G.queue.map(q=>
-    `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid rgba(0,0,0,0.06);font-size:13px">
-      <span style="font-size:18px">${q.flag}</span><span style="flex:1">${q.name}</span><span style="font-size:12px;color:#888">${q.capital}</span>
-    </div>`).join('');
-
-  showScreen('s-result');
-  if(stars===3)setTimeout(confetti,400);
-}
-
-function showToast(msg){
-  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2200);
-}
-function confetti(){
-  const colors=['#EF9F27','#D4537E','#378ADD','#1D9E75','#7F77DD','#D85A30'];
-  const app=document.getElementById('app');
-  for(let i=0;i<40;i++){
-    const el=document.createElement('div');el.className='confetti-piece';
-    el.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${colors[i%colors.length]};transform:rotate(${Math.random()*360}deg)`;
-    app.appendChild(el);
-    el.animate([{transform:`translateY(0) rotate(0)`,opacity:1},{transform:`translateY(${250+Math.random()*250}px) rotate(720deg)`,opacity:0}],
-      {duration:1200+Math.random()*800,easing:'ease-in'}).onfinish=()=>el.remove();
-  }
-}
+});
 
 updateHomeUI();
 </script>
