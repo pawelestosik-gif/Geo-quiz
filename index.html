@@ -4,25 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>World Geography Quiz</title>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-geo@3/dist/d3-geo.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#f5f4f0;min-height:100vh;padding:12px;display:flex;flex-direction:column;align-items:center}
-#app{width:100%;max-width:440px}
-.screen{display:none}
-.screen.active{display:block}
+#app{width:100%;max-width:480px;position:relative}
+.screen{display:none}.screen.active{display:block}
 .card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1rem 1.25rem;margin-bottom:12px}
 h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:2px}
-h2{font-size:16px;font-weight:500;color:#1a1a1a;margin-bottom:4px}
+h2{font-size:15px;font-weight:500;color:#1a1a1a;margin-bottom:4px}
 .sub{font-size:13px;color:#666;margin-bottom:12px}
 .btn{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;padding:10px 14px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.15);background:#fff;color:#1a1a1a;font-size:13px;cursor:pointer;margin-bottom:8px;transition:background 0.12s;font-family:inherit}
 .btn:hover{background:#f5f4f0}
 .btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#0F6E56}
 .btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#A32D2D}
-.btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#0F6E56;opacity:0.75}
+.btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#0F6E56;opacity:0.7}
 .btn-primary{background:#378ADD;border-color:#185FA5;color:#fff;font-weight:500;justify-content:center;padding:10px 16px}
 .btn-primary:hover{background:#185FA5}
-.btn-secondary{background:#fff;border-color:rgba(0,0,0,0.15);color:#1a1a1a;justify-content:center}
-.diff-btn{flex:1;padding:8px 6px;font-size:12px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.15);background:#fff;color:#666;cursor:pointer;text-align:center;font-family:inherit;transition:background 0.12s}
+.btn-secondary{justify-content:center;background:#fff}
+.diff-btn{flex:1;padding:8px 6px;font-size:12px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.15);background:#fff;color:#666;cursor:pointer;text-align:center;font-family:inherit}
 .diff-btn.active{background:#E6F1FB;color:#0C447C;border-color:#378ADD;font-weight:500}
 .progress-bar{height:4px;background:rgba(0,0,0,0.08);border-radius:2px;margin-bottom:12px;overflow:hidden}
 .progress-fill{height:100%;background:#378ADD;border-radius:2px;transition:width 0.3s}
@@ -31,83 +32,71 @@ h2{font-size:16px;font-weight:500;color:#1a1a1a;margin-bottom:4px}
 .hud-stat b{color:#1a1a1a;font-weight:500}
 .step-dots{display:flex;gap:5px;margin-bottom:10px}
 .step-dot{width:8px;height:8px;border-radius:50%;background:rgba(0,0,0,0.12)}
-.step-dot.done{background:#1D9E75}
-.step-dot.active{background:#378ADD}
-.flag-box{font-size:64px;text-align:center;padding:14px 0;line-height:1}
+.step-dot.done{background:#1D9E75}.step-dot.active{background:#378ADD}
+.flag-box{font-size:72px;text-align:center;padding:14px 0;line-height:1}
 .feedback{padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:10px;line-height:1.5}
 .feedback.good{background:#E1F5EE;color:#0F6E56}
 .feedback.bad{background:#FCEBEB;color:#A32D2D}
-.map-wrap{position:relative;width:100%;border-radius:8px;border:0.5px solid rgba(0,0,0,0.1);margin-bottom:10px;overflow:hidden}
 .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
 .badge-easy{background:#E1F5EE;color:#0F6E56}
 .badge-medium{background:#FAEEDA;color:#854F0B}
 .badge-hard{background:#FCEBEB;color:#A32D2D}
-
-/* STARS & REWARDS */
-.stars-row{display:flex;gap:4px;justify-content:center;margin:10px 0}
-.star{font-size:28px;opacity:0.2;transition:opacity 0.3s,transform 0.3s}
-.star.earned{opacity:1;transform:scale(1.15)}
 .award-banner{border-radius:12px;padding:12px 14px;margin-bottom:10px;text-align:center}
 .award-banner.gold{background:#FAEEDA;border:1px solid #EF9F27}
 .award-banner.silver{background:#F1EFE8;border:1px solid #888780}
 .award-banner.bronze{background:#FAECE7;border:1px solid #D85A30}
-.award-title{font-size:18px;font-weight:500;margin-bottom:2px}
-.award-sub{font-size:12px;color:#666}
-.streak-pill{display:inline-flex;align-items:center;gap:4px;background:#FAEEDA;color:#854F0B;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:500}
-
-/* ACHIEVEMENTS */
-.ach-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}
-.ach-card{background:#f5f4f0;border-radius:10px;padding:10px 12px;opacity:0.45;transition:opacity 0.3s}
-.ach-card.unlocked{opacity:1;background:#fff;border:0.5px solid rgba(0,0,0,0.1)}
-.ach-icon{font-size:22px;margin-bottom:4px}
-.ach-name{font-size:12px;font-weight:500;color:#1a1a1a;margin-bottom:2px}
-.ach-desc{font-size:11px;color:#666;line-height:1.3}
-
-/* PROFILE / STATS */
-.profile-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
-.avatar{width:48px;height:48px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid #378ADD}
-.level-bar-wrap{flex:1}
-.level-label{font-size:12px;color:#666;margin-bottom:3px}
-.level-bar{height:6px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden}
-.level-fill{height:100%;background:#378ADD;border-radius:3px;transition:width 0.4s}
+.award-banner.none{background:#f5f4f0;border:0.5px solid rgba(0,0,0,0.1)}
+.stars-row{display:flex;gap:4px;justify-content:center;margin:8px 0 12px}
+.star{font-size:28px;opacity:0.2;transition:opacity 0.3s,transform 0.3s}
+.star.earned{opacity:1;transform:scale(1.15)}
 .stat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}
 .stat-box{background:#f5f4f0;border-radius:8px;padding:10px;text-align:center}
 .stat-val{font-size:20px;font-weight:500;color:#1a1a1a}
 .stat-lbl{font-size:11px;color:#666;margin-top:1px}
-
-/* NAV */
-.bottom-nav{display:flex;gap:0;border:0.5px solid rgba(0,0,0,0.1);border-radius:10px;overflow:hidden;margin-bottom:14px;background:#fff}
-.nav-btn{flex:1;padding:9px 6px;font-size:11px;border:none;background:transparent;color:#666;cursor:pointer;text-align:center;font-family:inherit;transition:background 0.12s}
+.bottom-nav{display:flex;border:0.5px solid rgba(0,0,0,0.1);border-radius:10px;overflow:hidden;margin-bottom:14px;background:#fff}
+.nav-btn{flex:1;padding:9px 6px;font-size:11px;border:none;background:transparent;color:#666;cursor:pointer;font-family:inherit}
 .nav-btn.active{background:#E6F1FB;color:#0C447C;font-weight:500}
-.nav-btn:hover:not(.active){background:#f5f4f0}
-
-/* TOAST */
+.ach-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.ach-card{background:#f5f4f0;border-radius:10px;padding:10px 12px;opacity:0.4}
+.ach-card.unlocked{opacity:1;background:#fff;border:0.5px solid rgba(0,0,0,0.1)}
+.ach-icon{font-size:20px;margin-bottom:4px}
+.ach-name{font-size:12px;font-weight:500;color:#1a1a1a;margin-bottom:2px}
+.ach-desc{font-size:11px;color:#666;line-height:1.3}
+.profile-header{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.avatar{width:48px;height:48px;border-radius:50%;background:#E6F1FB;display:flex;align-items:center;justify-content:center;font-size:22px;border:2px solid #378ADD}
+.level-bar{height:6px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden;margin-top:4px}
+.level-fill{height:100%;background:#378ADD;border-radius:3px;transition:width 0.4s}
 #toast{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:100}
 #toast.show{opacity:1}
-
-/* CONFETTI */
 .confetti-piece{position:absolute;width:8px;height:8px;border-radius:2px;pointer-events:none}
+
+/* MAP STYLES */
+#map-svg{width:100%;height:auto;display:block;cursor:pointer}
+.country-path{fill:#C0DD97;stroke:#fff;stroke-width:0.8;transition:fill 0.15s;cursor:pointer}
+.country-path:hover{fill:#97C459}
+.country-path.correct-flash{fill:#1D9E75}
+.country-path.wrong-flash{fill:#E24B4A}
+.country-path.reveal-flash{fill:#1D9E75;opacity:0.7}
+.country-path.dimmed{fill:#D3D1C7;stroke:#fff}
+.map-container{background:#B5D4F4;border-radius:10px;border:0.5px solid rgba(0,0,0,0.1);margin-bottom:10px;overflow:hidden}
 </style>
 </head>
 <body>
-<div id="app" style="position:relative">
+<div id="app">
 <div id="toast"></div>
 
 <!-- HOME -->
 <div id="s-home" class="screen active">
   <div style="padding:4px 0 10px;display:flex;align-items:center;justify-content:space-between">
-    <div>
-      <h1>World Quiz</h1>
-      <p class="sub" style="margin:0">Flag → name → capital → map</p>
-    </div>
-    <div id="home-streak" style="display:none" class="streak-pill">🔥 <span id="streak-num">0</span> streak</div>
+    <div><h1>World Quiz</h1><p class="sub" style="margin:0">Flag → capital → find on map</p></div>
+    <div id="home-streak" style="display:none;background:#FAEEDA;color:#854F0B;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:500">🔥 <span id="streak-num">0</span></div>
   </div>
-
   <div class="card" style="padding:10px 12px;margin-bottom:10px">
     <div class="profile-header">
       <div class="avatar" id="home-avatar">🌍</div>
-      <div class="level-bar-wrap">
-        <div class="level-label">Level <b id="home-level">1</b> Explorer · <span id="home-xp-label">0 / 100 XP</span></div>
+      <div style="flex:1">
+        <div style="font-size:12px;color:#666">Level <b id="home-level">1</b> <span id="home-title">Explorer</span></div>
+        <div style="font-size:11px;color:#888;margin-bottom:3px" id="home-xp-label">0 / 100 XP</div>
         <div class="level-bar"><div class="level-fill" id="home-level-fill" style="width:0%"></div></div>
       </div>
     </div>
@@ -118,35 +107,29 @@ h2{font-size:16px;font-weight:500;color:#1a1a1a;margin-bottom:4px}
       <div class="stat-box"><div class="stat-val" id="home-accuracy">—</div><div class="stat-lbl">Accuracy</div></div>
     </div>
   </div>
-
   <div class="bottom-nav">
     <button class="nav-btn active" onclick="showHomeTab('play')">🎮 Play</button>
     <button class="nav-btn" onclick="showHomeTab('achievements')">🏆 Awards</button>
     <button class="nav-btn" onclick="showHomeTab('leaderboard')">📋 Scores</button>
   </div>
-
   <div id="tab-play">
-    <div style="display:flex;gap:6px;margin-bottom:10px">
+    <div style="display:flex;gap:6px;margin-bottom:8px">
       <button class="diff-btn active" id="d-easy" onclick="setDiff('easy')">Easy</button>
       <button class="diff-btn" id="d-medium" onclick="setDiff('medium')">Medium</button>
       <button class="diff-btn" id="d-hard" onclick="setDiff('hard')">Hard</button>
     </div>
-    <p style="font-size:11px;color:#888;margin-bottom:12px">Easy: 4 choices · Medium: 6 choices · Hard: type the answer</p>
+    <p style="font-size:11px;color:#888;margin-bottom:12px">Easy: 4 choices · Medium: 6 choices · Hard: type the answer (steps 1-2), click map (step 3)</p>
+    <button class="btn" onclick="startQuiz('Europe')">🌍 Europe <span style="font-size:11px;color:#888;margin-left:auto">44 countries</span></button>
     <button class="btn" onclick="startQuiz('Africa')">🌍 Africa <span style="font-size:11px;color:#888;margin-left:auto">54 countries</span></button>
     <button class="btn" onclick="startQuiz('Asia')">🌏 Asia <span style="font-size:11px;color:#888;margin-left:auto">48 countries</span></button>
-    <button class="btn" onclick="startQuiz('Europe')">🌍 Europe <span style="font-size:11px;color:#888;margin-left:auto">44 countries</span></button>
     <button class="btn" onclick="startQuiz('North America')">🌎 North America <span style="font-size:11px;color:#888;margin-left:auto">23 countries</span></button>
     <button class="btn" onclick="startQuiz('South America')">🌎 South America <span style="font-size:11px;color:#888;margin-left:auto">12 countries</span></button>
     <button class="btn" onclick="startQuiz('Oceania')">🌏 Oceania <span style="font-size:11px;color:#888;margin-left:auto">14 countries</span></button>
     <button class="btn" onclick="startQuiz('All')">🌐 All continents <span style="font-size:11px;color:#888;margin-left:auto">shuffle</span></button>
   </div>
-
-  <div id="tab-achievements" style="display:none">
-    <div class="ach-grid" id="ach-grid"></div>
-  </div>
-
+  <div id="tab-achievements" style="display:none"><div class="ach-grid" id="ach-grid"></div></div>
   <div id="tab-leaderboard" style="display:none">
-    <div id="lb-rows" style="margin-bottom:10px"></div>
+    <div id="lb-rows"></div>
     <div id="lb-empty" style="font-size:13px;color:#888;text-align:center;padding:20px 0">No games yet — play your first round!</div>
   </div>
 </div>
@@ -167,7 +150,7 @@ h2{font-size:16px;font-weight:500;color:#1a1a1a;margin-bottom:4px}
 
 <!-- RESULT -->
 <div id="s-result" class="screen">
-  <div id="result-award-banner"></div>
+  <div id="result-award-banner" class="award-banner none"></div>
   <div class="stars-row" id="result-stars"></div>
   <div class="card">
     <h2 style="margin-bottom:4px">Round complete!</h2>
@@ -184,136 +167,142 @@ h2{font-size:16px;font-weight:500;color:#1a1a1a;margin-bottom:4px}
     <button class="btn btn-secondary" onclick="showHome()">Choose continent</button>
   </div>
 </div>
-
 </div>
 
 <script>
 const COUNTRIES={
-  Africa:[
-    {name:"Nigeria",capital:"Abuja",flag:"🇳🇬",mx:0.515,my:0.44},
-    {name:"Ethiopia",capital:"Addis Ababa",flag:"🇪🇹",mx:0.575,my:0.43},
-    {name:"Egypt",capital:"Cairo",flag:"🇪🇬",mx:0.555,my:0.355},
-    {name:"Kenya",capital:"Nairobi",flag:"🇰🇪",mx:0.578,my:0.47},
-    {name:"South Africa",capital:"Pretoria",flag:"🇿🇦",mx:0.545,my:0.565},
-    {name:"Morocco",capital:"Rabat",flag:"🇲🇦",mx:0.49,my:0.325},
-    {name:"Ghana",capital:"Accra",flag:"🇬🇭",mx:0.5,my:0.445},
-    {name:"Tanzania",capital:"Dodoma",flag:"🇹🇿",mx:0.57,my:0.49},
-    {name:"Algeria",capital:"Algiers",flag:"🇩🇿",mx:0.505,my:0.345},
-    {name:"Zimbabwe",capital:"Harare",flag:"🇿🇼",mx:0.555,my:0.535},
-    {name:"Senegal",capital:"Dakar",flag:"🇸🇳",mx:0.478,my:0.42},
-    {name:"Uganda",capital:"Kampala",flag:"🇺🇬",mx:0.567,my:0.465},
-    {name:"Mozambique",capital:"Maputo",flag:"🇲🇿",mx:0.566,my:0.525},
-    {name:"Cameroon",capital:"Yaoundé",flag:"🇨🇲",mx:0.525,my:0.445},
-    {name:"Ivory Coast",capital:"Yamoussoukro",flag:"🇨🇮",mx:0.499,my:0.446},
-    {name:"Madagascar",capital:"Antananarivo",flag:"🇲🇬",mx:0.592,my:0.51},
-    {name:"Angola",capital:"Luanda",flag:"🇦🇴",mx:0.535,my:0.505},
-    {name:"Sudan",capital:"Khartoum",flag:"🇸🇩",mx:0.565,my:0.395},
-    {name:"Libya",capital:"Tripoli",flag:"🇱🇾",mx:0.525,my:0.35},
-    {name:"Tunisia",capital:"Tunis",flag:"🇹🇳",mx:0.515,my:0.33},
-  ],
   Europe:[
-    {name:"France",capital:"Paris",flag:"🇫🇷",mx:0.495,my:0.26},
-    {name:"Germany",capital:"Berlin",flag:"🇩🇪",mx:0.515,my:0.245},
-    {name:"United Kingdom",capital:"London",flag:"🇬🇧",mx:0.483,my:0.24},
-    {name:"Italy",capital:"Rome",flag:"🇮🇹",mx:0.518,my:0.28},
-    {name:"Spain",capital:"Madrid",flag:"🇪🇸",mx:0.487,my:0.275},
-    {name:"Poland",capital:"Warsaw",flag:"🇵🇱",mx:0.528,my:0.24},
-    {name:"Netherlands",capital:"Amsterdam",flag:"🇳🇱",mx:0.503,my:0.237},
-    {name:"Sweden",capital:"Stockholm",flag:"🇸🇪",mx:0.52,my:0.215},
-    {name:"Norway",capital:"Oslo",flag:"🇳🇴",mx:0.508,my:0.21},
-    {name:"Switzerland",capital:"Bern",flag:"🇨🇭",mx:0.508,my:0.258},
-    {name:"Portugal",capital:"Lisbon",flag:"🇵🇹",mx:0.481,my:0.277},
-    {name:"Belgium",capital:"Brussels",flag:"🇧🇪",mx:0.499,my:0.242},
-    {name:"Austria",capital:"Vienna",flag:"🇦🇹",mx:0.52,my:0.255},
-    {name:"Greece",capital:"Athens",flag:"🇬🇷",mx:0.531,my:0.287},
-    {name:"Czech Republic",capital:"Prague",flag:"🇨🇿",mx:0.52,my:0.247},
-    {name:"Hungary",capital:"Budapest",flag:"🇭🇺",mx:0.526,my:0.253},
-    {name:"Romania",capital:"Bucharest",flag:"🇷🇴",mx:0.536,my:0.258},
-    {name:"Ukraine",capital:"Kyiv",flag:"🇺🇦",mx:0.544,my:0.248},
-    {name:"Finland",capital:"Helsinki",flag:"🇫🇮",mx:0.532,my:0.21},
-    {name:"Denmark",capital:"Copenhagen",flag:"🇩🇰",mx:0.511,my:0.228},
+    {name:"France",capital:"Paris",flag:"🇫🇷",iso:"FRA"},
+    {name:"Germany",capital:"Berlin",flag:"🇩🇪",iso:"DEU"},
+    {name:"United Kingdom",capital:"London",flag:"🇬🇧",iso:"GBR"},
+    {name:"Italy",capital:"Rome",flag:"🇮🇹",iso:"ITA"},
+    {name:"Spain",capital:"Madrid",flag:"🇪🇸",iso:"ESP"},
+    {name:"Poland",capital:"Warsaw",flag:"🇵🇱",iso:"POL"},
+    {name:"Netherlands",capital:"Amsterdam",flag:"🇳🇱",iso:"NLD"},
+    {name:"Sweden",capital:"Stockholm",flag:"🇸🇪",iso:"SWE"},
+    {name:"Norway",capital:"Oslo",flag:"🇳🇴",iso:"NOR"},
+    {name:"Switzerland",capital:"Bern",flag:"🇨🇭",iso:"CHE"},
+    {name:"Portugal",capital:"Lisbon",flag:"🇵🇹",iso:"PRT"},
+    {name:"Belgium",capital:"Brussels",flag:"🇧🇪",iso:"BEL"},
+    {name:"Austria",capital:"Vienna",flag:"🇦🇹",iso:"AUT"},
+    {name:"Greece",capital:"Athens",flag:"🇬🇷",iso:"GRC"},
+    {name:"Czech Republic",capital:"Prague",flag:"🇨🇿",iso:"CZE"},
+    {name:"Hungary",capital:"Budapest",flag:"🇭🇺",iso:"HUN"},
+    {name:"Romania",capital:"Bucharest",flag:"🇷🇴",iso:"ROU"},
+    {name:"Ukraine",capital:"Kyiv",flag:"🇺🇦",iso:"UKR"},
+    {name:"Finland",capital:"Helsinki",flag:"🇫🇮",iso:"FIN"},
+    {name:"Denmark",capital:"Copenhagen",flag:"🇩🇰",iso:"DNK"},
+    {name:"Slovakia",capital:"Bratislava",flag:"🇸🇰",iso:"SVK"},
+    {name:"Croatia",capital:"Zagreb",flag:"🇭🇷",iso:"HRV"},
+    {name:"Serbia",capital:"Belgrade",flag:"🇷🇸",iso:"SRB"},
+    {name:"Bulgaria",capital:"Sofia",flag:"🇧🇬",iso:"BGR"},
+    {name:"Ireland",capital:"Dublin",flag:"🇮🇪",iso:"IRL"},
+  ],
+  Africa:[
+    {name:"Nigeria",capital:"Abuja",flag:"🇳🇬",iso:"NGA"},
+    {name:"Ethiopia",capital:"Addis Ababa",flag:"🇪🇹",iso:"ETH"},
+    {name:"Egypt",capital:"Cairo",flag:"🇪🇬",iso:"EGY"},
+    {name:"Kenya",capital:"Nairobi",flag:"🇰🇪",iso:"KEN"},
+    {name:"South Africa",capital:"Pretoria",flag:"🇿🇦",iso:"ZAF"},
+    {name:"Morocco",capital:"Rabat",flag:"🇲🇦",iso:"MAR"},
+    {name:"Ghana",capital:"Accra",flag:"🇬🇭",iso:"GHA"},
+    {name:"Tanzania",capital:"Dodoma",flag:"🇹🇿",iso:"TZA"},
+    {name:"Algeria",capital:"Algiers",flag:"🇩🇿",iso:"DZA"},
+    {name:"Zimbabwe",capital:"Harare",flag:"🇿🇼",iso:"ZWE"},
+    {name:"Senegal",capital:"Dakar",flag:"🇸🇳",iso:"SEN"},
+    {name:"Uganda",capital:"Kampala",flag:"🇺🇬",iso:"UGA"},
+    {name:"Mozambique",capital:"Maputo",flag:"🇲🇿",iso:"MOZ"},
+    {name:"Cameroon",capital:"Yaoundé",flag:"🇨🇲",iso:"CMR"},
+    {name:"Ivory Coast",capital:"Yamoussoukro",flag:"🇨🇮",iso:"CIV"},
+    {name:"Madagascar",capital:"Antananarivo",flag:"🇲🇬",iso:"MDG"},
+    {name:"Angola",capital:"Luanda",flag:"🇦🇴",iso:"AGO"},
+    {name:"Sudan",capital:"Khartoum",flag:"🇸🇩",iso:"SDN"},
+    {name:"Libya",capital:"Tripoli",flag:"🇱🇾",iso:"LBY"},
+    {name:"Tunisia",capital:"Tunis",flag:"🇹🇳",iso:"TUN"},
   ],
   Asia:[
-    {name:"China",capital:"Beijing",flag:"🇨🇳",mx:0.72,my:0.32},
-    {name:"Japan",capital:"Tokyo",flag:"🇯🇵",mx:0.785,my:0.305},
-    {name:"India",capital:"New Delhi",flag:"🇮🇳",mx:0.655,my:0.365},
-    {name:"South Korea",capital:"Seoul",flag:"🇰🇷",mx:0.775,my:0.305},
-    {name:"Indonesia",capital:"Jakarta",flag:"🇮🇩",mx:0.738,my:0.46},
-    {name:"Saudi Arabia",capital:"Riyadh",flag:"🇸🇦",mx:0.595,my:0.365},
-    {name:"Thailand",capital:"Bangkok",flag:"🇹🇭",mx:0.715,my:0.4},
-    {name:"Vietnam",capital:"Hanoi",flag:"🇻🇳",mx:0.733,my:0.39},
-    {name:"Turkey",capital:"Ankara",flag:"🇹🇷",mx:0.562,my:0.295},
-    {name:"Iran",capital:"Tehran",flag:"🇮🇷",mx:0.613,my:0.33},
-    {name:"Pakistan",capital:"Islamabad",flag:"🇵🇰",mx:0.636,my:0.345},
-    {name:"Bangladesh",capital:"Dhaka",flag:"🇧🇩",mx:0.675,my:0.365},
-    {name:"Philippines",capital:"Manila",flag:"🇵🇭",mx:0.763,my:0.415},
-    {name:"Malaysia",capital:"Kuala Lumpur",flag:"🇲🇾",mx:0.732,my:0.44},
-    {name:"Iraq",capital:"Baghdad",flag:"🇮🇶",mx:0.587,my:0.335},
-    {name:"Afghanistan",capital:"Kabul",flag:"🇦🇫",mx:0.633,my:0.33},
-    {name:"Uzbekistan",capital:"Tashkent",flag:"🇺🇿",mx:0.635,my:0.295},
-    {name:"Kazakhstan",capital:"Astana",flag:"🇰🇿",mx:0.645,my:0.27},
-    {name:"Nepal",capital:"Kathmandu",flag:"🇳🇵",mx:0.663,my:0.35},
-    {name:"Sri Lanka",capital:"Colombo",flag:"🇱🇰",mx:0.661,my:0.405},
+    {name:"China",capital:"Beijing",flag:"🇨🇳",iso:"CHN"},
+    {name:"Japan",capital:"Tokyo",flag:"🇯🇵",iso:"JPN"},
+    {name:"India",capital:"New Delhi",flag:"🇮🇳",iso:"IND"},
+    {name:"South Korea",capital:"Seoul",flag:"🇰🇷",iso:"KOR"},
+    {name:"Indonesia",capital:"Jakarta",flag:"🇮🇩",iso:"IDN"},
+    {name:"Saudi Arabia",capital:"Riyadh",flag:"🇸🇦",iso:"SAU"},
+    {name:"Thailand",capital:"Bangkok",flag:"🇹🇭",iso:"THA"},
+    {name:"Vietnam",capital:"Hanoi",flag:"🇻🇳",iso:"VNM"},
+    {name:"Turkey",capital:"Ankara",flag:"🇹🇷",iso:"TUR"},
+    {name:"Iran",capital:"Tehran",flag:"🇮🇷",iso:"IRN"},
+    {name:"Pakistan",capital:"Islamabad",flag:"🇵🇰",iso:"PAK"},
+    {name:"Bangladesh",capital:"Dhaka",flag:"🇧🇩",iso:"BGD"},
+    {name:"Philippines",capital:"Manila",flag:"🇵🇭",iso:"PHL"},
+    {name:"Malaysia",capital:"Kuala Lumpur",flag:"🇲🇾",iso:"MYS"},
+    {name:"Iraq",capital:"Baghdad",flag:"🇮🇶",iso:"IRQ"},
+    {name:"Afghanistan",capital:"Kabul",flag:"🇦🇫",iso:"AFG"},
+    {name:"Kazakhstan",capital:"Astana",flag:"🇰🇿",iso:"KAZ"},
+    {name:"Nepal",capital:"Kathmandu",flag:"🇳🇵",iso:"NPL"},
+    {name:"Sri Lanka",capital:"Colombo",flag:"🇱🇰",iso:"LKA"},
+    {name:"Israel",capital:"Jerusalem",flag:"🇮🇱",iso:"ISR"},
   ],
   "North America":[
-    {name:"United States",capital:"Washington D.C.",flag:"🇺🇸",mx:0.21,my:0.305},
-    {name:"Canada",capital:"Ottawa",flag:"🇨🇦",mx:0.2,my:0.26},
-    {name:"Mexico",capital:"Mexico City",flag:"🇲🇽",mx:0.185,my:0.375},
-    {name:"Cuba",capital:"Havana",flag:"🇨🇺",mx:0.225,my:0.39},
-    {name:"Guatemala",capital:"Guatemala City",flag:"🇬🇹",mx:0.19,my:0.405},
-    {name:"Honduras",capital:"Tegucigalpa",flag:"🇭🇳",mx:0.198,my:0.41},
-    {name:"Costa Rica",capital:"San José",flag:"🇨🇷",mx:0.198,my:0.428},
-    {name:"Panama",capital:"Panama City",flag:"🇵🇦",mx:0.207,my:0.435},
-    {name:"Jamaica",capital:"Kingston",flag:"🇯🇲",mx:0.228,my:0.4},
-    {name:"Haiti",capital:"Port-au-Prince",flag:"🇭🇹",mx:0.237,my:0.397},
-    {name:"Dominican Republic",capital:"Santo Domingo",flag:"🇩🇴",mx:0.242,my:0.397},
-    {name:"El Salvador",capital:"San Salvador",flag:"🇸🇻",mx:0.192,my:0.415},
+    {name:"United States",capital:"Washington D.C.",flag:"🇺🇸",iso:"USA"},
+    {name:"Canada",capital:"Ottawa",flag:"🇨🇦",iso:"CAN"},
+    {name:"Mexico",capital:"Mexico City",flag:"🇲🇽",iso:"MEX"},
+    {name:"Cuba",capital:"Havana",flag:"🇨🇺",iso:"CUB"},
+    {name:"Guatemala",capital:"Guatemala City",flag:"🇬🇹",iso:"GTM"},
+    {name:"Honduras",capital:"Tegucigalpa",flag:"🇭🇳",iso:"HND"},
+    {name:"Costa Rica",capital:"San José",flag:"🇨🇷",iso:"CRI"},
+    {name:"Panama",capital:"Panama City",flag:"🇵🇦",iso:"PAN"},
+    {name:"Jamaica",capital:"Kingston",flag:"🇯🇲",iso:"JAM"},
+    {name:"Haiti",capital:"Port-au-Prince",flag:"🇭🇹",iso:"HTI"},
+    {name:"Dominican Republic",capital:"Santo Domingo",flag:"🇩🇴",iso:"DOM"},
+    {name:"El Salvador",capital:"San Salvador",flag:"🇸🇻",iso:"SLV"},
   ],
   "South America":[
-    {name:"Brazil",capital:"Brasília",flag:"🇧🇷",mx:0.275,my:0.48},
-    {name:"Argentina",capital:"Buenos Aires",flag:"🇦🇷",mx:0.255,my:0.565},
-    {name:"Colombia",capital:"Bogotá",flag:"🇨🇴",mx:0.232,my:0.45},
-    {name:"Peru",capital:"Lima",flag:"🇵🇪",mx:0.228,my:0.49},
-    {name:"Venezuela",capital:"Caracas",flag:"🇻🇪",mx:0.245,my:0.44},
-    {name:"Chile",capital:"Santiago",flag:"🇨🇱",mx:0.242,my:0.555},
-    {name:"Ecuador",capital:"Quito",flag:"🇪🇨",mx:0.221,my:0.465},
-    {name:"Bolivia",capital:"Sucre",flag:"🇧🇴",mx:0.248,my:0.51},
-    {name:"Paraguay",capital:"Asunción",flag:"🇵🇾",mx:0.26,my:0.535},
-    {name:"Uruguay",capital:"Montevideo",flag:"🇺🇾",mx:0.267,my:0.555},
-    {name:"Guyana",capital:"Georgetown",flag:"🇬🇾",mx:0.258,my:0.447},
-    {name:"Suriname",capital:"Paramaribo",flag:"🇸🇷",mx:0.265,my:0.447},
+    {name:"Brazil",capital:"Brasília",flag:"🇧🇷",iso:"BRA"},
+    {name:"Argentina",capital:"Buenos Aires",flag:"🇦🇷",iso:"ARG"},
+    {name:"Colombia",capital:"Bogotá",flag:"🇨🇴",iso:"COL"},
+    {name:"Peru",capital:"Lima",flag:"🇵🇪",iso:"PER"},
+    {name:"Venezuela",capital:"Caracas",flag:"🇻🇪",iso:"VEN"},
+    {name:"Chile",capital:"Santiago",flag:"🇨🇱",iso:"CHL"},
+    {name:"Ecuador",capital:"Quito",flag:"🇪🇨",iso:"ECU"},
+    {name:"Bolivia",capital:"Sucre",flag:"🇧🇴",iso:"BOL"},
+    {name:"Paraguay",capital:"Asunción",flag:"🇵🇾",iso:"PRY"},
+    {name:"Uruguay",capital:"Montevideo",flag:"🇺🇾",iso:"URY"},
+    {name:"Guyana",capital:"Georgetown",flag:"🇬🇾",iso:"GUY"},
+    {name:"Suriname",capital:"Paramaribo",flag:"🇸🇷",iso:"SUR"},
   ],
   Oceania:[
-    {name:"Australia",capital:"Canberra",flag:"🇦🇺",mx:0.79,my:0.555},
-    {name:"New Zealand",capital:"Wellington",flag:"🇳🇿",mx:0.857,my:0.6},
-    {name:"Papua New Guinea",capital:"Port Moresby",flag:"🇵🇬",mx:0.805,my:0.475},
-    {name:"Fiji",capital:"Suva",flag:"🇫🇯",mx:0.875,my:0.525},
-    {name:"Solomon Islands",capital:"Honiara",flag:"🇸🇧",mx:0.845,my:0.49},
-    {name:"Vanuatu",capital:"Port Vila",flag:"🇻🇺",mx:0.852,my:0.515},
-    {name:"Samoa",capital:"Apia",flag:"🇼🇸",mx:0.895,my:0.515},
-    {name:"Kiribati",capital:"South Tarawa",flag:"🇰🇮",mx:0.875,my:0.465},
-    {name:"Tonga",capital:"Nukualofa",flag:"🇹🇴",mx:0.885,my:0.53},
-    {name:"Micronesia",capital:"Palikir",flag:"🇫🇲",mx:0.825,my:0.44},
-    {name:"Palau",capital:"Ngerulmud",flag:"🇵🇼",mx:0.803,my:0.43},
-    {name:"Marshall Islands",capital:"Majuro",flag:"🇲🇭",mx:0.86,my:0.44},
-    {name:"Nauru",capital:"Yaren",flag:"🇳🇷",mx:0.858,my:0.475},
-    {name:"Tuvalu",capital:"Funafuti",flag:"🇹🇻",mx:0.875,my:0.495},
+    {name:"Australia",capital:"Canberra",flag:"🇦🇺",iso:"AUS"},
+    {name:"New Zealand",capital:"Wellington",flag:"🇳🇿",iso:"NZL"},
+    {name:"Papua New Guinea",capital:"Port Moresby",flag:"🇵🇬",iso:"PNG"},
+    {name:"Fiji",capital:"Suva",flag:"🇫🇯",iso:"FJI"},
+    {name:"Solomon Islands",capital:"Honiara",flag:"🇸🇧",iso:"SLB"},
+    {name:"Vanuatu",capital:"Port Vila",flag:"🇻🇺",iso:"VUT"},
+    {name:"Samoa",capital:"Apia",flag:"🇼🇸",iso:"WSM"},
   ]
+};
+
+const CONTINENT_ISO={
+  Europe:["FRA","DEU","GBR","ITA","ESP","POL","NLD","SWE","NOR","CHE","PRT","BEL","AUT","GRC","CZE","HUN","ROU","UKR","FIN","DNK","SVK","HRV","SRB","BGR","IRL","BLR","LTU","LVA","EST","MDA","ALB","MKD","SVN","BIH","MNE","LUX","ISL","MLT","CYP","AND","LIE","MCO","SMR","VAT"],
+  Africa:["NGA","ETH","EGY","KEN","ZAF","MAR","GHA","TZA","DZA","ZWE","SEN","UGA","MOZ","CMR","CIV","MDG","AGO","SDN","LBY","TUN","MLI","BFA","NER","TCD","SOM","ZMB","MWI","RWA","BDI","SSD","CAF","COD","COG","GAB","GNQ","STP","GNB","GIN","SLE","LBR","TGO","BEN","GMB","CPV","COM","MUS","SYC","DJI","ERI","NAM","BWA","LSO","SWZ","MRT"],
+  Asia:["CHN","JPN","IND","KOR","IDN","SAU","THA","VNM","TUR","IRN","PAK","BGD","PHL","MYS","IRQ","AFG","KAZ","NPL","LKA","ISR","MMR","KHM","LAO","MNG","UZB","TKM","TJK","KGZ","AZE","ARM","GEO","SYR","JOR","LBN","YEM","OMN","ARE","QAT","BHR","KWT","SGP","BRN","TLS","MDV","BTN","TWN","PRK"],
+  "North America":["USA","CAN","MEX","CUB","GTM","HND","CRI","PAN","JAM","HTI","DOM","SLV","NIC","BLZ","BHS","TTO","BRB","LCA","VCT","GRD","ATG","DMA","KNA"],
+  "South America":["BRA","ARG","COL","PER","VEN","CHL","ECU","BOL","PRY","URY","GUY","SUR","GUF"],
+  Oceania:["AUS","NZL","PNG","FJI","SLB","VUT","WSM","TON","KIR","FSM","PLW","MHL","NRU","TUV"]
 };
 
 const ACHIEVEMENTS=[
   {id:"first_game",icon:"🎮",name:"First steps",desc:"Complete your first round",check:p=>p.gamesPlayed>=1},
   {id:"perfect_round",icon:"💯",name:"Perfect round",desc:"100% accuracy in a round",check:p=>p.perfectRounds>=1},
   {id:"streak5",icon:"🔥",name:"On fire",desc:"Get a 5-answer streak",check:p=>p.bestStreak>=5},
-  {id:"streak10",icon:"🌋",name:"Unstoppable",desc:"Get a 10-answer streak",check:p=>p.bestStreak>=10},
-  {id:"hard_win",icon:"💎",name:"Diamond mind",desc:"Score 80%+ on Hard difficulty",check:p=>p.hardHighScore>=80},
-  {id:"globe_trotter",icon:"🌐",name:"Globe trotter",desc:"Play all 6 continents",check:p=>p.continentsPlayed&&p.continentsPlayed.length>=6},
-  {id:"century",icon:"💯",name:"Century",desc:"Earn 1000 total XP",check:p=>p.totalXP>=1000},
-  {id:"africa_master",icon:"🌍",name:"Africa expert",desc:"Score 90%+ on Africa",check:p=>(p.continentBest||{})['Africa']>=90},
+  {id:"streak10",icon:"🌋",name:"Unstoppable",desc:"10-answer streak",check:p=>p.bestStreak>=10},
+  {id:"hard_win",icon:"💎",name:"Diamond mind",desc:"Score 80%+ on Hard",check:p=>p.hardHighScore>=80},
+  {id:"globe_trotter",icon:"🌐",name:"Globe trotter",desc:"Play all 6 continents",check:p=>(p.continentsPlayed||[]).length>=6},
+  {id:"century",icon:"✨",name:"Century",desc:"Earn 1000 total XP",check:p=>p.totalXP>=1000},
   {id:"europe_master",icon:"🏰",name:"Europe expert",desc:"Score 90%+ on Europe",check:p=>(p.continentBest||{})['Europe']>=90},
+  {id:"africa_master",icon:"🌍",name:"Africa expert",desc:"Score 90%+ on Africa",check:p=>(p.continentBest||{})['Africa']>=90},
   {id:"asia_master",icon:"🐉",name:"Asia expert",desc:"Score 90%+ on Asia",check:p=>(p.continentBest||{})['Asia']>=90},
-  {id:"americas_master",icon:"🦅",name:"Americas expert",desc:"Score 90%+ on Americas",check:p=>(p.continentBest||{})['North America']>=90||(p.continentBest||{})['South America']>=90},
   {id:"games10",icon:"🎯",name:"Dedicated",desc:"Play 10 rounds",check:p=>p.gamesPlayed>=10},
+  {id:"americas_master",icon:"🦅",name:"Americas expert",desc:"90%+ on North or South America",check:p=>(p.continentBest||{})['North America']>=90||(p.continentBest||{})['South America']>=90},
 ];
 
 const LEVELS=[
@@ -327,33 +316,37 @@ const LEVELS=[
   {level:8,title:"Geography Legend",avatar:"⭐",xpNeeded:999999},
 ];
 
-let profile={
-  gamesPlayed:0,totalScore:0,totalXP:0,totalCorrect:0,totalAnswers:0,
-  bestStreak:0,perfectRounds:0,hardHighScore:0,
-  continentsPlayed:[],continentBest:{},
-  unlockedAchievements:[],leaderboard:[]
-};
-try{const s=localStorage.getItem('geoQuizProfile');if(s)profile=Object.assign(profile,JSON.parse(s));}catch(e){}
-function saveProfile(){try{localStorage.setItem('geoQuizProfile',JSON.stringify(profile));}catch(e){}}
+let profile={gamesPlayed:0,totalScore:0,totalXP:0,totalCorrect:0,totalAnswers:0,bestStreak:0,perfectRounds:0,hardHighScore:0,continentsPlayed:[],continentBest:{},unlockedAchievements:[],leaderboard:[]};
+try{const s=localStorage.getItem('geoQuizV2');if(s)profile=Object.assign(profile,JSON.parse(s));}catch(e){}
+function saveProfile(){try{localStorage.setItem('geoQuizV2',JSON.stringify(profile));}catch(e){}}
 
-let G={diff:'easy',continent:'',queue:[],idx:0,step:0,score:0,correct:0,total:0,
-  streak:0,maxStreak:0,mapClickEnabled:false,mapTarget:null};
+let G={diff:'easy',continent:'',queue:[],idx:0,step:0,score:0,correct:0,total:0,streak:0,maxStreak:0};
+let topoData=null;
+
+async function loadTopo(){
+  if(topoData)return topoData;
+  try{
+    const r=await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+    topoData=await r.json();
+    return topoData;
+  }catch(e){return null;}
+}
 
 function getLevelInfo(xp){
   for(let i=LEVELS.length-1;i>=0;i--){
-    if(i===0||xp>=LEVELS[i-1].xpNeeded) return {
-      ...LEVELS[i],
-      prevXP:i===0?0:LEVELS[i-1].xpNeeded,
-      nextXP:LEVELS[i].xpNeeded,
-      progress:i===0?Math.min(xp/LEVELS[0].xpNeeded,1):Math.min((xp-LEVELS[i-1].xpNeeded)/(LEVELS[i].xpNeeded-LEVELS[i-1].xpNeeded),1)
-    };
+    const prev=i===0?0:LEVELS[i-1].xpNeeded;
+    const next=LEVELS[i].xpNeeded;
+    if(i===0||xp>=prev){
+      return{...LEVELS[i],prevXP:prev,nextXP:next,progress:Math.min((xp-prev)/(next-prev),1)};
+    }
   }
-  return {...LEVELS[0],prevXP:0,nextXP:100,progress:xp/100};
+  return{...LEVELS[0],prevXP:0,nextXP:100,progress:xp/100};
 }
 
 function updateHomeUI(){
   const li=getLevelInfo(profile.totalXP);
   document.getElementById('home-level').textContent=li.level;
+  document.getElementById('home-title').textContent=li.title;
   document.getElementById('home-xp-label').textContent=Math.round(profile.totalXP)+' / '+li.nextXP+' XP';
   document.getElementById('home-level-fill').style.width=Math.round(li.progress*100)+'%';
   document.getElementById('home-avatar').textContent=li.avatar;
@@ -362,26 +355,17 @@ function updateHomeUI(){
   document.getElementById('home-best-streak').textContent=profile.bestStreak;
   const acc=profile.totalAnswers>0?Math.round(profile.totalCorrect/profile.totalAnswers*100)+'%':'—';
   document.getElementById('home-accuracy').textContent=acc;
-  if(G.streak>0){
-    document.getElementById('home-streak').style.display='inline-flex';
-    document.getElementById('streak-num').textContent=G.streak;
-  }
-  renderAchievements();
-  renderLeaderboard();
+  if(G.streak>0){document.getElementById('home-streak').style.display='inline-block';document.getElementById('streak-num').textContent=G.streak;}
+  renderAchievements();renderLeaderboard();
 }
 
 function showHomeTab(tab){
-  ['play','achievements','leaderboard'].forEach(t=>{
-    document.getElementById('tab-'+t).style.display=t===tab?'block':'none';
-  });
-  document.querySelectorAll('.nav-btn').forEach((b,i)=>{
-    b.classList.toggle('active',['play','achievements','leaderboard'][i]===tab);
-  });
+  ['play','achievements','leaderboard'].forEach(t=>document.getElementById('tab-'+t).style.display=t===tab?'block':'none');
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>b.classList.toggle('active',['play','achievements','leaderboard'][i]===tab));
 }
 
 function renderAchievements(){
-  const grid=document.getElementById('ach-grid');
-  grid.innerHTML=ACHIEVEMENTS.map(a=>`
+  document.getElementById('ach-grid').innerHTML=ACHIEVEMENTS.map(a=>`
     <div class="ach-card ${profile.unlockedAchievements.includes(a.id)?'unlocked':''}">
       <div class="ach-icon">${a.icon}</div>
       <div class="ach-name">${a.name}</div>
@@ -390,18 +374,18 @@ function renderAchievements(){
 }
 
 function renderLeaderboard(){
-  const rows=document.getElementById('lb-rows');
-  const empty=document.getElementById('lb-empty');
   const lb=profile.leaderboard||[];
-  if(lb.length===0){empty.style.display='block';rows.innerHTML='';return;}
+  const empty=document.getElementById('lb-empty');
+  const rows=document.getElementById('lb-rows');
+  if(!lb.length){empty.style.display='block';rows.innerHTML='';return;}
   empty.style.display='none';
   rows.innerHTML=lb.map((e,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);font-size:13px">
       <span style="width:22px;color:#888;font-size:12px">${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.'}</span>
-      <span style="flex:1;color:#1a1a1a">${e.continent}</span>
-      <span style="font-size:11px;color:#888;margin-right:4px"><span class="badge badge-${e.diff}">${e.diff}</span></span>
+      <span style="flex:1">${e.continent}</span>
+      <span class="badge badge-${e.diff}" style="margin-right:4px">${e.diff}</span>
       <span style="font-size:11px;color:#888;margin-right:6px">${e.acc}%</span>
-      <span style="font-weight:500;color:#1a1a1a">${e.score}</span>
+      <span style="font-weight:500">${e.score}</span>
     </div>`).join('');
 }
 
@@ -409,8 +393,7 @@ function checkAchievements(){
   const newOnes=[];
   ACHIEVEMENTS.forEach(a=>{
     if(!profile.unlockedAchievements.includes(a.id)&&a.check(profile)){
-      profile.unlockedAchievements.push(a.id);
-      newOnes.push(a);
+      profile.unlockedAchievements.push(a.id);newOnes.push(a);
     }
   });
   return newOnes;
@@ -423,7 +406,6 @@ function setDiff(d){
 
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function showHome(){updateHomeUI();showScreen('s-home');}
-
 function shuffle(arr){return arr.slice().sort(()=>Math.random()-0.5);}
 
 function startQuiz(continent){
@@ -447,13 +429,12 @@ function renderQuestion(){
 
 function renderStep(){
   const q=G.queue[G.idx];
-  document.getElementById('step-dots').innerHTML=[0,1,2,3].map(i=>
+  document.getElementById('step-dots').innerHTML=[0,1,2].map(i=>
     `<div class="step-dot ${i<G.step?'done':i===G.step?'active':''}"></div>`).join('');
   document.getElementById('next-btn').style.display='none';
   const body=document.getElementById('q-body');
-  if(G.step===0) renderFlagStep(q,body);
-  else if(G.step===1) renderNameStep(q,body);
-  else if(G.step===2) renderCapitalStep(q,body);
+  if(G.step===0)renderFlagStep(q,body);
+  else if(G.step===1)renderCapitalStep(q,body);
   else renderMapStep(q,body);
 }
 
@@ -469,28 +450,13 @@ function renderFlagStep(q,body){
     <div class="flag-box">${q.flag}</div></div><div id="ans-area"></div>`;
   renderAnswerArea('name',q,'ans-area');
 }
-function renderNameStep(q,body){
-  body.innerHTML=`<div class="card" style="text-align:center">
-    <p style="font-size:12px;color:#888;margin-bottom:4px">Step 2 — Capital of ${q.name}?</p>
-    <div style="font-size:32px;margin:6px 0">${q.flag}</div>
-    <p style="font-size:15px;font-weight:500">${q.name}</p></div><div id="ans-area"></div>`;
-  renderAnswerArea('capital',q,'ans-area');
-}
+
 function renderCapitalStep(q,body){
   body.innerHTML=`<div class="card" style="text-align:center">
-    <p style="font-size:12px;color:#888;margin-bottom:4px">Step 3 — Which flag is ${q.name}?</p>
-    <p style="font-size:13px;color:#666">Capital: <b style="color:#1a1a1a">${q.capital}</b></p></div><div id="ans-area"></div>`;
-  renderFlagOptions(q,'ans-area');
-}
-function renderMapStep(q,body){
-  body.innerHTML=`<div class="card" style="padding:10px 12px">
-    <p style="font-size:12px;color:#888;margin-bottom:4px">Step 4 — Tap where <b>${q.name}</b> is</p>
-    <p style="font-size:12px;color:#666">${q.flag} Capital: ${q.capital}</p></div>
-    <div class="map-wrap" id="map-wrap"><canvas id="live-map" style="display:block;width:100%;cursor:crosshair"></canvas></div>
-    <div id="map-feedback" style="font-size:13px;color:#666;padding:4px 0 8px;min-height:22px"></div>`;
-  G.mapClickEnabled=true;G.mapTarget=q;
-  drawWorldMap('live-map',null,null);
-  document.getElementById('live-map').addEventListener('click',handleMapClick);
+    <p style="font-size:12px;color:#888;margin-bottom:4px">Step 2 — What is the capital of ${q.name}?</p>
+    <div style="font-size:36px;margin:6px 0">${q.flag}</div>
+    <p style="font-size:15px;font-weight:500">${q.name}</p></div><div id="ans-area"></div>`;
+  renderAnswerArea('capital',q,'ans-area');
 }
 
 function renderAnswerArea(field,q,cid){
@@ -506,20 +472,113 @@ function renderAnswerArea(field,q,cid){
   cont.innerHTML=opts.map(o=>`<button class="btn" onclick="checkChoice(this,'${o.replace(/'/g,"\\'")}','${q[field].replace(/'/g,"\\'")}','${field}')">${o}</button>`).join('');
 }
 
-function renderFlagOptions(q,cid){
-  const cont=document.getElementById(cid);
-  const n=G.diff==='hard'?8:G.diff==='medium'?6:4;
-  const others=shuffle(getPool().filter(c=>c.flag!==q.flag)).slice(0,n-1);
-  const opts=shuffle([q,...others]);
-  cont.innerHTML=`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
-    ${opts.map(o=>`<button class="btn" style="font-size:28px;padding:12px;justify-content:center" onclick="checkFlagChoice(this,'${o.flag}','${q.flag}')">${o.flag}</button>`).join('')}
-  </div>`;
+function renderMapStep(q,body){
+  body.innerHTML=`<div class="card" style="padding:10px 12px">
+    <p style="font-size:12px;color:#888;margin-bottom:2px">Step 3 — Click on <b style="color:#1a1a1a">${q.name}</b> on the map</p>
+    <p style="font-size:12px;color:#666">${q.flag} Capital: ${q.capital}</p>
+  </div>
+  <div class="map-container" id="map-container"><div id="map-loading" style="text-align:center;padding:40px;font-size:13px;color:#888">Loading map...</div></div>
+  <div id="map-feedback" style="font-size:13px;color:#666;padding:4px 0 8px;min-height:22px"></div>`;
+  loadAndDrawMap(q);
 }
 
-function updateStreakHUD(){
-  const hud=document.getElementById('q-streak-hud');
-  if(G.streak>=2){hud.style.display='';document.getElementById('q-streak-val').textContent=G.streak;}
-  else hud.style.display='none';
+async function loadAndDrawMap(q){
+  const topo=await loadTopo();
+  const container=document.getElementById('map-container');
+  if(!container)return;
+  if(!topo){
+    container.innerHTML=`<div style="padding:20px;text-align:center;font-size:13px;color:#888">Map unavailable offline. <button class="btn btn-primary" style="width:auto;display:inline-flex;margin-top:8px" onclick="handleAnswer(false,'map','${q.name}')">Skip this step</button></div>`;
+    return;
+  }
+  container.innerHTML='';
+
+  const countries=topojson.feature(topo,topo.objects.countries);
+  const continent=G.continent==='All'?null:G.continent;
+  const validISOs=continent?new Set(CONTINENT_ISO[continent]||[]):null;
+
+  const numericToISO={};
+  Object.entries(CONTINENT_ISO).forEach(([cont,isos])=>{
+    isos.forEach(iso=>numericToISO[iso]=iso);
+  });
+
+  const ISO3166={"004":"AFG","008":"ALB","012":"DZA","024":"AGO","032":"ARG","036":"AUS","040":"AUT","050":"BGD","056":"BEL","064":"BTN","068":"BOL","076":"BRA","100":"BGR","116":"KHM","120":"CMR","124":"CAN","144":"LKA","152":"CHL","156":"CHN","170":"COL","178":"COG","180":"COD","188":"CRI","191":"HRV","192":"CUB","196":"CYP","203":"CZE","208":"DNK","214":"DOM","218":"ECU","818":"EGY","222":"SLV","231":"ETH","246":"FIN","250":"FRA","266":"GAB","276":"DEU","288":"GHA","300":"GRC","320":"GTM","324":"GIN","332":"HTI","340":"HND","348":"HUN","356":"IND","360":"IDN","364":"IRN","368":"IRQ","372":"IRL","376":"ISR","380":"ITA","388":"JAM","392":"JPN","400":"JOR","398":"KAZ","404":"KEN","408":"PRK","410":"KOR","414":"KWT","418":"LAO","422":"LBN","430":"LBR","434":"LBY","440":"LTU","442":"LUX","484":"MEX","496":"MNG","504":"MAR","508":"MOZ","516":"NAM","524":"NPL","528":"NLD","540":"NCL","554":"NZL","562":"NER","566":"NGA","578":"NOR","586":"PAK","591":"PAN","598":"PNG","600":"PRY","604":"PER","608":"PHL","616":"POL","620":"PRT","630":"PRI","642":"ROU","643":"RUS","646":"RWA","682":"SAU","686":"SEN","694":"SLE","703":"SVK","705":"SVN","706":"SOM","710":"ZAF","724":"ESP","729":"SDN","752":"SWE","756":"CHE","760":"SYR","764":"THA","788":"TUN","792":"TUR","800":"UGA","804":"UKR","784":"ARE","840":"USA","858":"URY","862":"VEN","704":"VNM","887":"YEM","894":"ZMB","716":"ZWE","050":"BGD","688":"SRB","070":"BIH","807":"MKD","499":"MNE","020":"AND","040":"AUT","756":"CHE","250":"FRA","492":"MCO","076":"BRA","858":"URY","591":"PAN","388":"JAM","214":"DOM","332":"HTI","222":"SLV","188":"CRI","320":"GTM","340":"HND","558":"NIC","084":"BLZ","036":"AUS","554":"NZL","598":"PNG","242":"FJI","090":"SLB","548":"VUT","882":"WSM","776":"TON","296":"KIR","583":"FSM","585":"PLW","584":"MHL","520":"NRU","798":"TUV","818":"EGY"};
+
+  const targetISO=q.iso;
+  const quizISOs=new Set(G.queue.map(c=>c.iso));
+
+  const W=container.clientWidth||400;
+  const H=Math.round(W*0.65);
+
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.setAttribute('id','map-svg');
+  svg.style.cssText=`width:100%;height:auto;display:block;cursor:default`;
+
+  let projection;
+  if(continent==='Europe'){
+    projection=d3.geoMercator().center([15,54]).scale(W*1.1).translate([W/2,H/2]);
+  } else if(continent==='Africa'){
+    projection=d3.geoMercator().center([20,0]).scale(W*0.85).translate([W/2,H/2]);
+  } else if(continent==='Asia'){
+    projection=d3.geoMercator().center([90,35]).scale(W*0.55).translate([W/2,H/2]);
+  } else if(continent==='North America'){
+    projection=d3.geoMercator().center([-95,50]).scale(W*0.6).translate([W/2,H/2]);
+  } else if(continent==='South America'){
+    projection=d3.geoMercator().center([-58,-15]).scale(W*0.9).translate([W/2,H/2]);
+  } else if(continent==='Oceania'){
+    projection=d3.geoMercator().center([150,-25]).scale(W*0.7).translate([W/2,H/2]);
+  } else {
+    projection=d3.geoNaturalEarth1().scale(W*0.18).translate([W/2,H/2]);
+  }
+
+  const path=d3.geoPath().projection(projection);
+
+  countries.features.forEach(feature=>{
+    const numId=String(feature.id).padStart(3,'0');
+    const iso=ISO3166[numId];
+    if(!iso)return;
+    if(validISOs&&!validISOs.has(iso))return;
+
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    const d=path(feature);
+    if(!d)return;
+    p.setAttribute('d',d);
+    p.setAttribute('data-iso',iso);
+    p.classList.add('country-path');
+
+    if(!quizISOs.has(iso)){
+      p.classList.add('dimmed');
+    }
+
+    p.addEventListener('click',()=>handleMapClick(iso,targetISO,p,svg));
+    p.addEventListener('mouseenter',()=>{if(!svg.dataset.answered)p.style.fill='#97C459';});
+    p.addEventListener('mouseleave',()=>{if(!svg.dataset.answered&&!p.classList.contains('dimmed'))p.style.fill='';});
+    svg.appendChild(p);
+  });
+
+  container.appendChild(svg);
+}
+
+function handleMapClick(clickedISO,targetISO,clickedPath,svg){
+  if(svg.dataset.answered)return;
+  svg.dataset.answered='1';
+  svg.querySelectorAll('.country-path').forEach(p=>p.style.cursor='default');
+
+  const ok=clickedISO===targetISO;
+  clickedPath.classList.add(ok?'correct-flash':'wrong-flash');
+  clickedPath.style.fill=ok?'#1D9E75':'#E24B4A';
+
+  if(!ok){
+    const correctPath=svg.querySelector(`[data-iso="${targetISO}"]`);
+    if(correctPath){correctPath.classList.add('reveal-flash');correctPath.style.fill='#1D9E75';correctPath.style.opacity='0.8';}
+  }
+
+  const fb=document.getElementById('map-feedback');
+  if(fb)fb.innerHTML=ok
+    ?`<span style="color:#0F6E56">✓ Correct! That's ${G.queue[G.idx].name}.</span>`
+    :`<span style="color:#A32D2D">✗ You clicked the wrong country — the green one is ${G.queue[G.idx].name}.</span>`;
+
+  handleAnswer(ok,'map',G.queue[G.idx].name);
 }
 
 function checkChoice(btn,chosen,correct,field){
@@ -529,14 +588,6 @@ function checkChoice(btn,chosen,correct,field){
   btn.classList.add(ok?'correct':'wrong');
   if(!ok)btns.forEach(b=>{if(b.textContent.trim()===correct)b.classList.add('reveal');});
   handleAnswer(ok,field,correct);
-}
-function checkFlagChoice(btn,chosen,correct){
-  const btns=btn.closest('div').querySelectorAll('button');
-  btns.forEach(b=>b.disabled=true);
-  const ok=chosen===correct;
-  btn.classList.add(ok?'correct':'wrong');
-  if(!ok)btns.forEach(b=>{if(b.textContent.trim()===correct)b.classList.add('reveal');});
-  handleAnswer(ok,'flag',correct);
 }
 function checkHard(field,correct){
   const input=document.getElementById('hard-input');
@@ -550,63 +601,36 @@ function checkHard(field,correct){
 
 function handleAnswer(ok,field,correct){
   G.total++;
-  if(ok){
-    G.correct++;G.streak++;
-    if(G.streak>G.maxStreak)G.maxStreak=G.streak;
-    if(G.streak===5)showToast('🔥 5 in a row!');
-    if(G.streak===10)showToast('🌋 10 streak! Unstoppable!');
-  } else {
-    G.streak=0;
-  }
-  updateStreakHUD();
+  if(ok){G.correct++;G.streak++;if(G.streak>G.maxStreak)G.maxStreak=G.streak;}
+  else G.streak=0;
+  if(G.streak===5)showToast('🔥 5 in a row!');
+  if(G.streak===10)showToast('🌋 10 streak! Unstoppable!');
+  const hud=document.getElementById('q-streak-hud');
+  if(G.streak>=2){hud.style.display='';document.getElementById('q-streak-val').textContent=G.streak;}
+  else hud.style.display='none';
   const base=G.diff==='easy'?10:G.diff==='medium'?15:20;
   const bonus=ok?Math.min(G.streak-1,4)*2:0;
-  const pts=ok?base+bonus:0;
-  G.score+=pts;
+  G.score+=ok?base+bonus:0;
   document.getElementById('q-score').textContent=G.score;
   const fb=document.createElement('div');
   fb.className='feedback '+(ok?'good':'bad');
-  const streakMsg=ok&&G.streak>=3?` (${G.streak}x streak! +${bonus} bonus)`:'';
-  fb.innerHTML=ok?`✓ Correct!${streakMsg}`:`✗ The answer was: <b>${correct}</b>`;
+  const streakMsg=ok&&G.streak>=3?` (${G.streak}x streak +${bonus} bonus)`:'';
+  if(field!=='map')fb.innerHTML=ok?`✓ Correct!${streakMsg}`:`✗ The answer was: <b>${correct}</b>`;
   const body=document.getElementById('q-body');
-  const existing=body.querySelector('.feedback');
-  if(existing)existing.remove();
-  body.appendChild(fb);
+  const ex=body.querySelector('.feedback');if(ex)ex.remove();
+  if(field!=='map')body.appendChild(fb);
   document.getElementById('next-btn').style.display='block';
-}
-
-function handleMapClick(e){
-  if(!G.mapClickEnabled)return;
-  const canvas=document.getElementById('live-map');
-  if(!canvas)return;
-  const rect=canvas.getBoundingClientRect();
-  const sc=canvas.width/rect.width;
-  const cx=(e.clientX-rect.left)*sc,cy=(e.clientY-rect.top)*sc;
-  const W=canvas.width,H=canvas.height;
-  const tx=G.mapTarget.mx*W,ty=G.mapTarget.my*H;
-  const dist=Math.hypot(cx-tx,cy-ty);
-  const threshold=W*(G.diff==='easy'?0.09:G.diff==='medium'?0.06:0.038);
-  const ok=dist<threshold;
-  G.mapClickEnabled=false;
-  drawWorldMap('live-map',{x:cx,y:cy},G.mapTarget);
-  const fb=document.getElementById('map-feedback');
-  if(fb)fb.innerHTML=ok?`<span style="color:#0F6E56">✓ Spot on! That's ${G.mapTarget.name}!</span>`
-    :`<span style="color:#A32D2D">✗ The marker shows the correct location.</span>`;
-  handleAnswer(ok,'map',G.mapTarget.name);
 }
 
 function nextStep(){
   G.step++;
-  if(G.step>3){
-    G.idx++;
-    if(G.idx>=G.queue.length){endRound();return;}
-    renderQuestion();
-  } else renderStep();
+  if(G.step>2){G.idx++;if(G.idx>=G.queue.length){endRound();return;}renderQuestion();}
+  else renderStep();
 }
 
 function calcStars(acc,diff){
-  if(diff==='easy') return acc>=90?3:acc>=70?2:acc>=50?1:0;
-  if(diff==='medium') return acc>=85?3:acc>=65?2:acc>=45?1:0;
+  if(diff==='easy')return acc>=90?3:acc>=70?2:acc>=50?1:0;
+  if(diff==='medium')return acc>=85?3:acc>=65?2:acc>=45?1:0;
   return acc>=80?3:acc>=60?2:acc>=40?1:0;
 }
 
@@ -614,24 +638,18 @@ function endRound(){
   const acc=G.total>0?Math.round(G.correct/G.total*100):0;
   const stars=calcStars(acc,G.diff);
   const xpEarned=Math.round(G.score*0.5*(G.diff==='easy'?1:G.diff==='medium'?1.5:2));
-
-  profile.gamesPlayed++;
-  profile.totalScore+=G.score;
-  profile.totalXP+=xpEarned;
-  profile.totalCorrect+=G.correct;
-  profile.totalAnswers+=G.total;
+  profile.gamesPlayed++;profile.totalScore+=G.score;profile.totalXP+=xpEarned;
+  profile.totalCorrect+=G.correct;profile.totalAnswers+=G.total;
   if(G.maxStreak>profile.bestStreak)profile.bestStreak=G.maxStreak;
   if(acc===100)profile.perfectRounds++;
   if(G.diff==='hard'&&acc>profile.hardHighScore)profile.hardHighScore=acc;
   if(!profile.continentsPlayed.includes(G.continent))profile.continentsPlayed.push(G.continent);
   if(!profile.continentBest)profile.continentBest={};
   if(!profile.continentBest[G.continent]||acc>profile.continentBest[G.continent])profile.continentBest[G.continent]=acc;
-
   profile.leaderboard=profile.leaderboard||[];
   profile.leaderboard.push({continent:G.continent,diff:G.diff,score:G.score,acc,date:new Date().toLocaleDateString()});
   profile.leaderboard.sort((a,b)=>b.score-a.score);
   profile.leaderboard=profile.leaderboard.slice(0,15);
-
   const newAchs=checkAchievements();
   saveProfile();
 
@@ -639,113 +657,51 @@ function endRound(){
   document.getElementById('res-acc').textContent=acc+'%';
   document.getElementById('res-streak').textContent=G.maxStreak;
   document.getElementById('res-xp').textContent='+'+xpEarned+' XP';
-
   const diffMap={easy:'badge-easy',medium:'badge-medium',hard:'badge-hard'};
   document.getElementById('res-sub').innerHTML=`${G.continent} · <span class="badge ${diffMap[G.diff]}">${G.diff}</span>`;
 
   const banner=document.getElementById('result-award-banner');
-  if(stars===3){
-    banner.className='award-banner gold';
-    banner.innerHTML=`<div style="font-size:36px;margin-bottom:4px">🏆</div><div class="award-title" style="color:#633806">Gold — Perfect!</div><div class="award-sub">${acc}% accuracy · ${G.maxStreak} streak</div>`;
-  } else if(stars===2){
-    banner.className='award-banner silver';
-    banner.innerHTML=`<div style="font-size:36px;margin-bottom:4px">🥈</div><div class="award-title" style="color:#444441">Silver — Great job!</div><div class="award-sub">${acc}% accuracy</div>`;
-  } else if(stars===1){
-    banner.className='award-banner bronze';
-    banner.innerHTML=`<div style="font-size:36px;margin-bottom:4px">🥉</div><div class="award-title" style="color:#712B13">Bronze — Keep going!</div><div class="award-sub">${acc}% accuracy</div>`;
-  } else {
-    banner.className='award-banner';
-    banner.style.background='#f5f4f0';banner.style.border='0.5px solid rgba(0,0,0,0.1)';
-    banner.innerHTML=`<div style="font-size:28px;margin-bottom:4px">📚</div><div class="award-title" style="color:#444">Keep practising!</div><div class="award-sub">You can do it — try again!</div>`;
-  }
+  if(stars===3){banner.className='award-banner gold';banner.innerHTML=`<div style="font-size:36px;margin-bottom:4px">🏆</div><div style="font-size:18px;font-weight:500;color:#633806">Gold — Perfect!</div><div style="font-size:12px;color:#854F0B">${acc}% accuracy · ${G.maxStreak} streak</div>`;}
+  else if(stars===2){banner.className='award-banner silver';banner.innerHTML=`<div style="font-size:36px;margin-bottom:4px">🥈</div><div style="font-size:18px;font-weight:500;color:#444">Silver — Great job!</div><div style="font-size:12px;color:#666">${acc}% accuracy</div>`;}
+  else if(stars===1){banner.className='award-banner bronze';banner.innerHTML=`<div style="font-size:36px;margin-bottom:4px">🥉</div><div style="font-size:18px;font-weight:500;color:#712B13">Bronze — Keep going!</div><div style="font-size:12px;color:#993C1D">${acc}% accuracy</div>`;}
+  else{banner.className='award-banner none';banner.innerHTML=`<div style="font-size:28px;margin-bottom:4px">📚</div><div style="font-size:16px;font-weight:500;color:#444">Keep practising!</div><div style="font-size:12px;color:#666">You'll get there!</div>`;}
 
   const starsRow=document.getElementById('result-stars');
-  starsRow.innerHTML=[1,2,3].map(i=>`<span class="star" id="star${i}">⭐</span>`).join('');
-  [1,2,3].forEach(i=>{
-    if(i<=stars)setTimeout(()=>{const s=document.getElementById('star'+i);if(s)s.classList.add('earned');},i*300);
-  });
+  starsRow.innerHTML=[1,2,3].map(i=>`<span class="star" id="rstar${i}">⭐</span>`).join('');
+  [1,2,3].forEach(i=>{if(i<=stars)setTimeout(()=>{const s=document.getElementById('rstar'+i);if(s)s.classList.add('earned');},i*300);});
 
-  if(newAchs.length>0){
-    document.getElementById('new-achievements').innerHTML=`
-      <div style="background:#FAEEDA;border-radius:10px;padding:10px 12px;margin-bottom:8px">
-        <div style="font-size:12px;font-weight:500;color:#633806;margin-bottom:6px">🏆 New achievements unlocked!</div>
-        ${newAchs.map(a=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#854F0B;margin-bottom:4px"><span style="font-size:18px">${a.icon}</span><span><b>${a.name}</b> — ${a.desc}</span></div>`).join('')}
-      </div>`;
-  } else {
-    document.getElementById('new-achievements').innerHTML='';
-  }
+  document.getElementById('new-achievements').innerHTML=newAchs.length?`
+    <div style="background:#FAEEDA;border-radius:10px;padding:10px 12px;margin-bottom:8px">
+      <div style="font-size:12px;font-weight:500;color:#633806;margin-bottom:6px">🏆 New achievements!</div>
+      ${newAchs.map(a=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#854F0B;margin-bottom:4px"><span style="font-size:18px">${a.icon}</span><b>${a.name}</b> — ${a.desc}</div>`).join('')}
+    </div>`:'' ;
 
   document.getElementById('res-breakdown').innerHTML=G.queue.map(q=>
     `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid rgba(0,0,0,0.06);font-size:13px">
-      <span style="font-size:18px">${q.flag}</span>
-      <span style="flex:1">${q.name}</span>
-      <span style="font-size:12px;color:#888">${q.capital}</span>
+      <span style="font-size:18px">${q.flag}</span><span style="flex:1">${q.name}</span><span style="font-size:12px;color:#888">${q.capital}</span>
     </div>`).join('');
 
   showScreen('s-result');
   if(stars===3)setTimeout(confetti,400);
 }
 
-function drawWorldMap(cid,clickPos,target){
-  const wrap=document.getElementById('map-wrap');
-  const wW=wrap?wrap.clientWidth:340;
-  const canvas=document.getElementById(cid);
-  const W=wW||340,H=Math.round(W*0.52);
-  canvas.width=W;canvas.height=H;
-  const ctx=canvas.getContext('2d');
-  ctx.fillStyle='#B5D4F4';ctx.fillRect(0,0,W,H);
-  const LAND=[
-    {pts:[[0.05,0.15],[0.28,0.13],[0.3,0.2],[0.28,0.28],[0.24,0.35],[0.22,0.38],[0.21,0.45],[0.17,0.4],[0.12,0.35],[0.06,0.28],[0.04,0.2]]},
-    {pts:[[0.21,0.43],[0.28,0.43],[0.3,0.48],[0.29,0.55],[0.27,0.62],[0.24,0.65],[0.22,0.58],[0.2,0.5],[0.19,0.45]]},
-    {pts:[[0.47,0.18],[0.56,0.18],[0.58,0.22],[0.56,0.28],[0.54,0.3],[0.5,0.3],[0.47,0.28],[0.46,0.23]]},
-    {pts:[[0.47,0.3],[0.56,0.29],[0.59,0.35],[0.6,0.42],[0.58,0.5],[0.57,0.57],[0.53,0.6],[0.49,0.58],[0.47,0.52],[0.46,0.44],[0.47,0.36]]},
-    {pts:[[0.56,0.18],[0.82,0.15],[0.85,0.2],[0.82,0.28],[0.78,0.32],[0.74,0.42],[0.7,0.44],[0.65,0.42],[0.6,0.38],[0.58,0.32],[0.56,0.28],[0.58,0.22]]},
-    {pts:[[0.75,0.5],[0.86,0.5],[0.88,0.56],[0.86,0.62],[0.8,0.63],[0.75,0.6],[0.73,0.55]]},
-    {pts:[[0.27,0.1],[0.36,0.09],[0.37,0.15],[0.33,0.18],[0.28,0.16]]},
-  ];
-  LAND.forEach(land=>{
-    ctx.beginPath();land.pts.forEach((p,i)=>{i===0?ctx.moveTo(p[0]*W,p[1]*H):ctx.lineTo(p[0]*W,p[1]*H);});
-    ctx.closePath();ctx.fillStyle='#C0DD97';ctx.fill();ctx.strokeStyle='#8DBB50';ctx.lineWidth=0.5;ctx.stroke();
-  });
-  if(target){
-    const tx=target.mx*W,ty=target.my*H;
-    ctx.beginPath();ctx.arc(tx,ty,6,0,Math.PI*2);ctx.fillStyle='#1D9E75';ctx.fill();
-    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
-    ctx.font=`500 ${Math.round(W*0.03)}px sans-serif`;ctx.fillStyle='#27500A';ctx.textAlign='center';
-    ctx.fillText(target.name,tx,ty-10);ctx.textAlign='left';
-  }
-  if(clickPos){
-    ctx.beginPath();ctx.arc(clickPos.x,clickPos.y,5,0,Math.PI*2);ctx.fillStyle='#D85A30';ctx.fill();
-    ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
-    if(target){
-      ctx.beginPath();ctx.moveTo(clickPos.x,clickPos.y);ctx.lineTo(target.mx*W,target.my*H);
-      ctx.strokeStyle='#D85A30';ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
-    }
-  }
-}
-
 function showToast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2200);
 }
-
 function confetti(){
   const colors=['#EF9F27','#D4537E','#378ADD','#1D9E75','#7F77DD','#D85A30'];
   const app=document.getElementById('app');
   for(let i=0;i<40;i++){
-    const el=document.createElement('div');
-    el.className='confetti-piece';
+    const el=document.createElement('div');el.className='confetti-piece';
     el.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};transform:rotate(${Math.random()*360}deg)`;
     app.appendChild(el);
-    const dur=1000+Math.random()*1500;
-    el.animate([
-      {transform:`translateY(0) rotate(0deg)`,opacity:1},
-      {transform:`translateY(${200+Math.random()*300}px) rotate(${360+Math.random()*360}deg)`,opacity:0}
-    ],{duration:dur,easing:'ease-in'}).onfinish=()=>el.remove();
+    el.animate([{transform:`translateY(0) rotate(0deg)`,opacity:1},{transform:`translateY(${200+Math.random()*300}px) rotate(${720}deg)`,opacity:0}],{duration:1200+Math.random()*800,easing:'ease-in'}).onfinish=()=>el.remove();
   }
 }
 
 updateHomeUI();
+loadTopo();
 </script>
 </body>
 </html>
