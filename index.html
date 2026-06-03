@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>World Geography Quiz</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<!-- Preload map libraries so they're ready before step 3 -->
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-geo@3/dist/d3-geo.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#F0EDE8;--card:#FFFFFF;--border:rgba(0,0,0,0.1);--text:#1A1A2E;--sub:#666;--accent:#2563EB;--green:#16A34A;--danger:#DC2626;--gold:#F59E0B;}
@@ -401,25 +404,43 @@ function saveS(){localStorage.setItem('geoQ3',JSON.stringify(S))}
 // PRELOAD libs + topo on page load
 // ═══════════════════════════════
 function preload(){
-  loadScript('https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js',()=>{
-    loadScript('https://cdn.jsdelivr.net/npm/d3-geo@3/dist/d3-geo.min.js',()=>{
-      libsReady=true;
-      fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
+  // Scripts already loaded via <script> tags in <head>
+  // Just need to fetch the topo JSON data
+  libsReady=!!(window.topojson&&window.d3);
+
+  // If scripts didn't load from head tags, wait for them
+  if(!libsReady){
+    Promise.all([
+      loadScriptP('https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js'),
+      loadScriptP('https://cdn.jsdelivr.net/npm/d3-geo@3/dist/d3-geo.min.js'),
+    ]).then(()=>{libsReady=true;}).catch(()=>{});
+  }
+
+  // Fetch topo data — try jsdelivr then unpkg
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json')
+    .then(r=>{if(!r.ok)throw new Error(r.status);return r.json();})
+    .then(d=>{topoData=d;console.log('Map data ready');})
+    .catch(()=>{
+      console.warn('jsdelivr topo failed, trying unpkg...');
+      fetch('https://unpkg.com/world-atlas@2/countries-50m.json')
         .then(r=>r.json())
-        .then(d=>{topoData=d;})
-        .catch(()=>{console.warn('Topo fetch failed');});
+        .then(d=>{topoData=d;console.log('Map data ready (unpkg)');})
+        .catch(e=>console.error('Topo load failed completely:',e));
     });
-  });
 }
 
-function loadScript(src,cb){
-  const existing=document.querySelector(`script[src="${src}"]`);
-  if(existing){cb();return;}
-  const s=document.createElement('script');
-  s.src=src;
-  s.onload=cb;
-  s.onerror=()=>{console.warn('Script failed:',src);cb();};
-  document.head.appendChild(s);
+function loadScriptP(src){
+  return new Promise((resolve,reject)=>{
+    if(window.topojson&&src.includes('topojson')){resolve();return;}
+    if(window.d3&&src.includes('d3-geo')){resolve();return;}
+    const existing=document.querySelector(`script[src="${src}"]`);
+    if(existing){resolve();return;}
+    const s=document.createElement('script');
+    s.src=src;
+    s.onload=resolve;
+    s.onerror=()=>{console.warn('Failed:',src);reject(new Error('Failed: '+src));};
+    document.head.appendChild(s);
+  });
 }
 
 // ═══════════════════════════════
@@ -526,10 +547,11 @@ function showStep(s){
        <div class="q-question">Which country does this flag belong to?</div>
        ${makeOpts(q,'name')}`;
   } else {
-    // STEP 2: ask capital — options show flag + capital name
+    // STEP 2: ask capital — show flag in question, options are TEXT ONLY (no flags)
     document.getElementById('q-label').textContent='STEP 2 OF 3 — CAPITAL CITY';
     document.getElementById('q-content').innerHTML=
-      `<div class="q-question">What is the capital of <b>${q.name}</b>? ${q.flag}</div>
+      `<div class="flag-big">${q.flag}</div>
+       <div class="q-question">What is the capital of <b>${q.name}</b>?</div>
        ${makeOpts(q,'cap')}`;
   }
 }
@@ -538,13 +560,12 @@ function makeOpts(q,field){
   const pool=DB[G.cont]||DB.europe;
   const decoys=pool.filter(c=>c.id!==q.id).sort(()=>Math.random()-.5).slice(0,3);
   const opts=[q,...decoys].sort(()=>Math.random()-.5);
+  // Both steps: TEXT ONLY — no flags in answer options ever
   return opts.map(o=>{
-    // Step 1 (name): show ONLY text, no flag
-    // Step 2 (cap): show flag + capital
-    const inner = field==='name'
-      ? `<span style="font-size:14px">${o.name}</span>`
-      : `<span style="font-size:18px">${o.flag}</span><span>${o.cap}</span>`;
-    return `<button class="ans-btn" onclick="checkAns(this,'${o.id}','${q.id}','${field}')">${inner}</button>`;
+    const label = field==='name' ? o.name : o.cap;
+    return `<button class="ans-btn" onclick="checkAns(this,'${o.id}','${q.id}','${field}')">
+      <span style="font-size:14px">${label}</span>
+    </button>`;
   }).join('');
 }
 
@@ -601,16 +622,17 @@ function renderMap(q){
   const targetNum=ISO[q.id];
 
   const attempt=(n)=>{
-    if(libsReady&&topoData){
+    const ready=(window.topojson&&window.d3&&topoData);
+    if(ready){
+      libsReady=true;
       drawMap(q,quizNums,targetNum,container);
     } else if(n>0){
-      setTimeout(()=>attempt(n-1),500);
+      setTimeout(()=>attempt(n-1),600);
     } else {
-      // Map truly unavailable — show a plain list WITHOUT flags on options
       showNoMapFallback(q,container);
     }
   };
-  attempt(20); // wait up to 10s
+  attempt(30); // wait up to 18s
 }
 
 function drawMap(q,quizNums,targetNum,container){
