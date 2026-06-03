@@ -4,8 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>World Geography Quiz</title>
-<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/d3-geo@3/dist/d3-geo.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:system-ui,sans-serif;background:#f5f4f0;min-height:100vh;padding:12px;display:flex;flex-direction:column;align-items:center}
@@ -13,16 +11,15 @@ body{font-family:system-ui,sans-serif;background:#f5f4f0;min-height:100vh;paddin
 .screen{display:none}.screen.active{display:block}
 .card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1rem 1.25rem;margin-bottom:12px}
 h1{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:2px}
-h2{font-size:15px;font-weight:500;color:#1a1a1a;margin-bottom:4px}
 .sub{font-size:13px;color:#666;margin-bottom:12px}
-.btn{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;padding:10px 14px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.15);background:#fff;color:#1a1a1a;font-size:13px;cursor:pointer;margin-bottom:8px;transition:background 0.12s;font-family:inherit}
+.btn{display:flex;align-items:center;width:100%;padding:10px 14px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.15);background:#fff;color:#1a1a1a;font-size:13px;cursor:pointer;margin-bottom:8px;transition:background 0.12s;font-family:inherit;gap:8px}
 .btn:hover{background:#f5f4f0}
 .btn.correct{background:#E1F5EE;border-color:#1D9E75;color:#0F6E56}
 .btn.wrong{background:#FCEBEB;border-color:#E24B4A;color:#A32D2D}
 .btn.reveal{background:#E1F5EE;border-color:#1D9E75;color:#0F6E56;opacity:0.7}
 .btn-primary{background:#378ADD;border-color:#185FA5;color:#fff;font-weight:500;justify-content:center;padding:10px 16px}
 .btn-primary:hover{background:#185FA5}
-.btn-secondary{justify-content:center;background:#fff}
+.btn-secondary{justify-content:center}
 .diff-btn{flex:1;padding:8px 6px;font-size:12px;border-radius:8px;border:0.5px solid rgba(0,0,0,0.15);background:#fff;color:#666;cursor:pointer;text-align:center;font-family:inherit}
 .diff-btn.active{background:#E6F1FB;color:#0C447C;border-color:#378ADD;font-weight:500}
 .progress-bar{height:4px;background:rgba(0,0,0,0.08);border-radius:2px;margin-bottom:12px;overflow:hidden}
@@ -69,23 +66,21 @@ h2{font-size:15px;font-weight:500;color:#1a1a1a;margin-bottom:4px}
 #toast{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:8px 16px;border-radius:20px;font-size:13px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:100}
 #toast.show{opacity:1}
 .confetti-piece{position:absolute;width:8px;height:8px;border-radius:2px;pointer-events:none}
-
-/* MAP STYLES */
-#map-svg{width:100%;height:auto;display:block;cursor:pointer}
-.country-path{fill:#C0DD97;stroke:#fff;stroke-width:0.8;transition:fill 0.15s;cursor:pointer}
-.country-path:hover{fill:#97C459}
-.country-path.correct-flash{fill:#1D9E75}
-.country-path.wrong-flash{fill:#E24B4A}
-.country-path.reveal-flash{fill:#1D9E75;opacity:0.7}
-.country-path.dimmed{fill:#D3D1C7;stroke:#fff}
-.map-container{background:#B5D4F4;border-radius:10px;border:0.5px solid rgba(0,0,0,0.1);margin-bottom:10px;overflow:hidden}
+.map-svg{width:100%;height:auto;display:block;border-radius:10px;border:0.5px solid rgba(0,0,0,0.1);margin-bottom:10px}
+.cp{fill:#C0DD97;stroke:#fff;stroke-width:1.2;cursor:pointer;transition:fill 0.15s}
+.cp:hover{fill:#97C459}
+.cp.dimmed{fill:#D3D1C7;stroke:#fff;cursor:default;pointer-events:none}
+.cp.active-target{fill:#C0DD97;stroke:#378ADD;stroke-width:2}
+.cp.correct-flash{fill:#1D9E75;cursor:default;pointer-events:none}
+.cp.wrong-flash{fill:#E24B4A;cursor:default;pointer-events:none}
+.cp.reveal-flash{fill:#1D9E75;opacity:0.8;cursor:default;pointer-events:none}
+.map-hint{font-size:12px;color:#888;text-align:center;margin-bottom:6px}
 </style>
 </head>
 <body>
 <div id="app">
 <div id="toast"></div>
 
-<!-- HOME -->
 <div id="s-home" class="screen active">
   <div style="padding:4px 0 10px;display:flex;align-items:center;justify-content:space-between">
     <div><h1>World Quiz</h1><p class="sub" style="margin:0">Flag → capital → find on map</p></div>
@@ -104,7 +99,7 @@ h2{font-size:15px;font-weight:500;color:#1a1a1a;margin-bottom:4px}
       <div class="stat-box"><div class="stat-val" id="home-total-score">0</div><div class="stat-lbl">Total score</div></div>
       <div class="stat-box"><div class="stat-val" id="home-games">0</div><div class="stat-lbl">Games played</div></div>
       <div class="stat-box"><div class="stat-val" id="home-best-streak">0</div><div class="stat-lbl">Best streak</div></div>
-      <div class="stat-box"><div class="stat-val" id="home-accuracy">—</div><div class="stat-lbl">Accuracy</div></div>
+      <div class="stat-box"><div class="stat-val" id="home-accuracy">-</div><div class="stat-lbl">Accuracy</div></div>
     </div>
   </div>
   <div class="bottom-nav">
@@ -118,23 +113,21 @@ h2{font-size:15px;font-weight:500;color:#1a1a1a;margin-bottom:4px}
       <button class="diff-btn" id="d-medium" onclick="setDiff('medium')">Medium</button>
       <button class="diff-btn" id="d-hard" onclick="setDiff('hard')">Hard</button>
     </div>
-    <p style="font-size:11px;color:#888;margin-bottom:12px">Easy: 4 choices · Medium: 6 choices · Hard: type the answer (steps 1-2), click map (step 3)</p>
-    <button class="btn" onclick="startQuiz('Europe')">🌍 Europe <span style="font-size:11px;color:#888;margin-left:auto">44 countries</span></button>
-    <button class="btn" onclick="startQuiz('Africa')">🌍 Africa <span style="font-size:11px;color:#888;margin-left:auto">54 countries</span></button>
-    <button class="btn" onclick="startQuiz('Asia')">🌏 Asia <span style="font-size:11px;color:#888;margin-left:auto">48 countries</span></button>
-    <button class="btn" onclick="startQuiz('North America')">🌎 North America <span style="font-size:11px;color:#888;margin-left:auto">23 countries</span></button>
-    <button class="btn" onclick="startQuiz('South America')">🌎 South America <span style="font-size:11px;color:#888;margin-left:auto">12 countries</span></button>
-    <button class="btn" onclick="startQuiz('Oceania')">🌏 Oceania <span style="font-size:11px;color:#888;margin-left:auto">14 countries</span></button>
+    <p style="font-size:11px;color:#888;margin-bottom:12px">Easy: 4 choices · Medium: 6 choices · Hard: type the answer</p>
+    <button class="btn" onclick="startQuiz('Europe')">🌍 Europe <span style="font-size:11px;color:#888;margin-left:auto">25 countries</span></button>
+    <button class="btn" onclick="startQuiz('Africa')">🌍 Africa <span style="font-size:11px;color:#888;margin-left:auto">20 countries</span></button>
+    <button class="btn" onclick="startQuiz('Asia')">🌏 Asia <span style="font-size:11px;color:#888;margin-left:auto">20 countries</span></button>
+    <button class="btn" onclick="startQuiz('North America')">🌎 N. America <span style="font-size:11px;color:#888;margin-left:auto">12 countries</span></button>
+    <button class="btn" onclick="startQuiz('South America')">🌎 S. America <span style="font-size:11px;color:#888;margin-left:auto">12 countries</span></button>
     <button class="btn" onclick="startQuiz('All')">🌐 All continents <span style="font-size:11px;color:#888;margin-left:auto">shuffle</span></button>
   </div>
   <div id="tab-achievements" style="display:none"><div class="ach-grid" id="ach-grid"></div></div>
   <div id="tab-leaderboard" style="display:none">
     <div id="lb-rows"></div>
-    <div id="lb-empty" style="font-size:13px;color:#888;text-align:center;padding:20px 0">No games yet — play your first round!</div>
+    <div id="lb-empty" style="font-size:13px;color:#888;text-align:center;padding:20px 0">No games yet!</div>
   </div>
 </div>
 
-<!-- QUIZ -->
 <div id="s-quiz" class="screen">
   <div class="hud">
     <div class="hud-stat">Q <b id="q-num">1</b>/<b id="q-total">10</b></div>
@@ -148,12 +141,11 @@ h2{font-size:15px;font-weight:500;color:#1a1a1a;margin-bottom:4px}
   <button class="btn btn-primary" id="next-btn" style="display:none" onclick="nextStep()">Continue →</button>
 </div>
 
-<!-- RESULT -->
 <div id="s-result" class="screen">
   <div id="result-award-banner" class="award-banner none"></div>
   <div class="stars-row" id="result-stars"></div>
   <div class="card">
-    <h2 style="margin-bottom:4px">Round complete!</h2>
+    <div style="font-size:15px;font-weight:500;margin-bottom:4px">Round complete!</div>
     <p class="sub" id="res-sub"></p>
     <div class="stat-grid">
       <div class="stat-box"><div class="stat-val" id="res-score"></div><div class="stat-lbl">Score</div></div>
@@ -269,25 +261,129 @@ const COUNTRIES={
     {name:"Uruguay",capital:"Montevideo",flag:"🇺🇾",iso:"URY"},
     {name:"Guyana",capital:"Georgetown",flag:"🇬🇾",iso:"GUY"},
     {name:"Suriname",capital:"Paramaribo",flag:"🇸🇷",iso:"SUR"},
-  ],
-  Oceania:[
-    {name:"Australia",capital:"Canberra",flag:"🇦🇺",iso:"AUS"},
-    {name:"New Zealand",capital:"Wellington",flag:"🇳🇿",iso:"NZL"},
-    {name:"Papua New Guinea",capital:"Port Moresby",flag:"🇵🇬",iso:"PNG"},
-    {name:"Fiji",capital:"Suva",flag:"🇫🇯",iso:"FJI"},
-    {name:"Solomon Islands",capital:"Honiara",flag:"🇸🇧",iso:"SLB"},
-    {name:"Vanuatu",capital:"Port Vila",flag:"🇻🇺",iso:"VUT"},
-    {name:"Samoa",capital:"Apia",flag:"🇼🇸",iso:"WSM"},
   ]
 };
 
-const CONTINENT_ISO={
-  Europe:["FRA","DEU","GBR","ITA","ESP","POL","NLD","SWE","NOR","CHE","PRT","BEL","AUT","GRC","CZE","HUN","ROU","UKR","FIN","DNK","SVK","HRV","SRB","BGR","IRL","BLR","LTU","LVA","EST","MDA","ALB","MKD","SVN","BIH","MNE","LUX","ISL","MLT","CYP","AND","LIE","MCO","SMR","VAT"],
-  Africa:["NGA","ETH","EGY","KEN","ZAF","MAR","GHA","TZA","DZA","ZWE","SEN","UGA","MOZ","CMR","CIV","MDG","AGO","SDN","LBY","TUN","MLI","BFA","NER","TCD","SOM","ZMB","MWI","RWA","BDI","SSD","CAF","COD","COG","GAB","GNQ","STP","GNB","GIN","SLE","LBR","TGO","BEN","GMB","CPV","COM","MUS","SYC","DJI","ERI","NAM","BWA","LSO","SWZ","MRT"],
-  Asia:["CHN","JPN","IND","KOR","IDN","SAU","THA","VNM","TUR","IRN","PAK","BGD","PHL","MYS","IRQ","AFG","KAZ","NPL","LKA","ISR","MMR","KHM","LAO","MNG","UZB","TKM","TJK","KGZ","AZE","ARM","GEO","SYR","JOR","LBN","YEM","OMN","ARE","QAT","BHR","KWT","SGP","BRN","TLS","MDV","BTN","TWN","PRK"],
-  "North America":["USA","CAN","MEX","CUB","GTM","HND","CRI","PAN","JAM","HTI","DOM","SLV","NIC","BLZ","BHS","TTO","BRB","LCA","VCT","GRD","ATG","DMA","KNA"],
-  "South America":["BRA","ARG","COL","PER","VEN","CHL","ECU","BOL","PRY","URY","GUY","SUR","GUF"],
-  Oceania:["AUS","NZL","PNG","FJI","SLB","VUT","WSM","TON","KIR","FSM","PLW","MHL","NRU","TUV"]
+const MAPS={
+Europe:`<svg class="map-svg" viewBox="0 0 500 420" xmlns="http://www.w3.org/2000/svg" style="background:#B5D4F4">
+<path class="cp" id="c-ISL" d="M52,32 L88,28 L96,42 L88,56 L58,58 L46,45 Z"/>
+<path class="cp" id="c-NOR" d="M215,18 L268,15 L285,28 L278,52 L255,62 L230,58 L212,42 Z"/>
+<path class="cp" id="c-SWE" d="M252,58 L278,50 L290,68 L285,100 L268,122 L248,118 L238,92 L242,68 Z"/>
+<path class="cp" id="c-FIN" d="M278,28 L325,22 L338,42 L332,82 L312,102 L285,98 L280,72 L282,48 Z"/>
+<path class="cp" id="c-EST" d="M322,72 L348,68 L352,84 L325,88 L318,80 Z"/>
+<path class="cp" id="c-LVA" d="M322,88 L350,85 L352,102 L325,105 L318,96 Z"/>
+<path class="cp" id="c-LTU" d="M312,105 L342,102 L345,118 L315,120 L308,112 Z"/>
+<path class="cp" id="c-DNK" d="M228,105 L242,102 L245,118 L232,122 L222,115 Z"/>
+<path class="cp" id="c-GBR" d="M158,72 L185,65 L195,80 L192,112 L175,122 L158,110 L152,92 Z"/>
+<path class="cp" id="c-IRL" d="M138,82 L158,78 L160,98 L148,108 L135,100 Z"/>
+<path class="cp" id="c-NLD" d="M225,128 L242,125 L245,140 L230,144 L222,138 Z"/>
+<path class="cp" id="c-BEL" d="M222,140 L242,138 L245,154 L228,158 L218,150 Z"/>
+<path class="cp" id="c-LUX" d="M242,150 L252,148 L254,158 L244,160 Z"/>
+<path class="cp" id="c-FRA" d="M178,148 L225,140 L240,158 L245,190 L222,210 L192,215 L170,200 L168,172 L175,155 Z"/>
+<path class="cp" id="c-PRT" d="M152,198 L172,195 L175,225 L162,238 L150,230 L148,212 Z"/>
+<path class="cp" id="c-ESP" d="M155,188 L192,185 L210,192 L215,215 L198,232 L172,238 L155,230 L148,215 L150,198 Z"/>
+<path class="cp" id="c-DEU" d="M242,122 L285,118 L295,135 L290,165 L265,172 L242,165 L235,150 L232,135 Z"/>
+<path class="cp" id="c-CHE" d="M240,172 L268,168 L272,185 L252,192 L238,185 Z"/>
+<path class="cp" id="c-AUT" d="M268,165 L305,160 L312,175 L298,185 L270,182 Z"/>
+<path class="cp" id="c-ITA" d="M242,192 L272,185 L288,198 L292,225 L280,252 L268,268 L256,265 L250,242 L246,218 L240,200 Z"/>
+<path class="cp" id="c-POL" d="M290,118 L338,115 L345,140 L338,162 L308,165 L288,158 L284,140 Z"/>
+<path class="cp" id="c-CZE" d="M288,158 L320,155 L325,170 L302,175 L286,170 Z"/>
+<path class="cp" id="c-SVK" d="M320,158 L345,152 L350,168 L328,172 L318,168 Z"/>
+<path class="cp" id="c-HUN" d="M298,175 L338,170 L345,185 L328,198 L298,195 L290,185 Z"/>
+<path class="cp" id="c-ROU" d="M338,162 L382,158 L388,180 L375,202 L345,205 L330,195 L332,175 Z"/>
+<path class="cp" id="c-BGR" d="M345,202 L378,198 L382,218 L360,225 L338,220 L335,208 Z"/>
+<path class="cp" id="c-GRC" d="M318,218 L348,212 L355,228 L344,248 L325,252 L312,240 L315,225 Z"/>
+<path class="cp" id="c-HRV" d="M282,185 L308,180 L314,195 L302,205 L282,200 L278,192 Z"/>
+<path class="cp" id="c-SRB" d="M308,195 L338,190 L342,208 L326,218 L308,212 L305,202 Z"/>
+<path class="cp" id="c-UKR" d="M342,138 L400,132 L412,155 L405,180 L372,188 L342,182 L338,165 Z"/>
+<path class="cp" id="c-BLR" d="M338,115 L380,110 L385,132 L365,142 L340,140 L335,125 Z"/>
+</svg>`,
+
+Africa:`<svg class="map-svg" viewBox="0 0 460 540" xmlns="http://www.w3.org/2000/svg" style="background:#B5D4F4">
+<path class="cp" id="c-MAR" d="M112,48 L168,42 L178,62 L172,90 L145,100 L118,92 L105,72 Z"/>
+<path class="cp" id="c-DZA" d="M168,42 L285,38 L295,60 L288,108 L245,118 L195,115 L178,90 L172,62 Z"/>
+<path class="cp" id="c-TUN" d="M255,42 L280,40 L288,58 L278,82 L258,85 L248,65 Z"/>
+<path class="cp" id="c-LBY" d="M278,42 L362,40 L368,62 L360,115 L312,122 L285,118 L282,90 L278,60 Z"/>
+<path class="cp" id="c-EGY" d="M360,42 L415,40 L420,62 L410,110 L362,115 L358,85 Z"/>
+<path class="cp" id="c-MRT" d="M72,105 L148,100 L155,135 L148,172 L105,178 L75,162 L68,132 Z"/>
+<path class="cp" id="c-MLI" d="M148,100 L242,95 L250,120 L245,162 L205,168 L162,165 L152,138 Z"/>
+<path class="cp" id="c-NER" d="M242,95 L312,90 L322,115 L315,158 L268,162 L248,155 L252,120 Z"/>
+<path class="cp" id="c-TCD" d="M312,90 L365,88 L372,112 L365,158 L322,162 L315,135 Z"/>
+<path class="cp" id="c-SDN" d="M362,88 L418,85 L425,110 L420,172 L378,178 L352,172 L345,145 L360,118 Z"/>
+<path class="cp" id="c-ETH" d="M400,165 L445,158 L458,182 L445,215 L415,225 L385,218 L378,192 L388,172 Z"/>
+<path class="cp" id="c-SEN" d="M72,162 L108,158 L112,175 L98,188 L74,185 L68,175 Z"/>
+<path class="cp" id="c-GHA" d="M168,185 L202,182 L208,205 L198,232 L172,238 L160,218 L162,195 Z"/>
+<path class="cp" id="c-CIV" d="M122,188 L172,185 L178,208 L168,232 L138,235 L120,218 L118,202 Z"/>
+<path class="cp" id="c-NGA" d="M225,158 L315,152 L322,178 L315,222 L275,232 L238,225 L225,198 L222,170 Z"/>
+<path class="cp" id="c-CMR" d="M312,158 L352,155 L358,182 L345,215 L318,222 L308,202 L312,175 Z"/>
+<path class="cp" id="c-AGO" d="M268,252 L345,248 L352,275 L345,320 L308,328 L272,320 L262,290 Z"/>
+<path class="cp" id="c-COD" d="M322,182 L392,178 L402,208 L395,265 L352,275 L318,268 L312,245 L315,215 L328,208 Z"/>
+<path class="cp" id="c-TZA" d="M378,245 L428,238 L435,268 L422,305 L388,312 L362,300 L358,275 L368,255 Z"/>
+<path class="cp" id="c-KEN" d="M402,210 L445,205 L452,232 L438,260 L408,265 L388,252 L395,228 Z"/>
+<path class="cp" id="c-UGA" d="M380,195 L412,188 L418,212 L400,222 L378,218 Z"/>
+<path class="cp" id="c-MOZ" d="M395,270 L428,265 L435,295 L428,355 L398,365 L372,355 L365,322 L372,292 Z"/>
+<path class="cp" id="c-ZWE" d="M355,315 L398,308 L405,335 L388,355 L358,358 L342,345 L345,325 Z"/>
+<path class="cp" id="c-ZAF" d="M268,380 L348,372 L358,398 L345,428 L312,442 L278,435 L255,412 L258,392 Z"/>
+<path class="cp" id="c-MDG" d="M445,298 L462,292 L468,322 L460,362 L442,368 L432,348 L435,315 Z"/>
+<path class="cp" id="c-SUD" d="M350,145 L360,120 L368,118 L370,150 Z"/>
+</svg>`,
+
+Asia:`<svg class="map-svg" viewBox="0 0 560 420" xmlns="http://www.w3.org/2000/svg" style="background:#B5D4F4">
+<path class="cp" id="c-TUR" d="M78,95 L158,88 L168,108 L162,128 L112,135 L78,128 L72,110 Z"/>
+<path class="cp" id="c-ISR" d="M148,128 L162,125 L165,148 L154,155 L144,148 Z"/>
+<path class="cp" id="c-IRQ" d="M162,88 L232,82 L242,105 L235,148 L200,158 L180,148 L175,125 L168,108 Z"/>
+<path class="cp" id="c-IRN" d="M185,72 L272,65 L285,85 L278,138 L242,152 L205,145 L192,125 L185,105 Z"/>
+<path class="cp" id="c-SAU" d="M162,148 L242,140 L255,162 L250,215 L215,235 L175,238 L152,220 L148,188 Z"/>
+<path class="cp" id="c-AFG" d="M272,65 L342,58 L352,80 L345,115 L312,125 L278,118 L272,95 Z"/>
+<path class="cp" id="c-PAK" d="M342,58 L395,52 L408,75 L402,118 L362,135 L328,128 L315,112 L318,85 Z"/>
+<path class="cp" id="c-KAZ" d="M212,18 L342,12 L355,35 L348,58 L272,65 L225,58 L208,40 Z"/>
+<path class="cp" id="c-IND" d="M352,82 L408,75 L425,100 L428,155 L412,202 L385,235 L358,242 L330,228 L318,195 L315,155 L318,120 L335,102 Z"/>
+<path class="cp" id="c-NPL" d="M382,105 L422,98 L425,115 L382,122 Z"/>
+<path class="cp" id="c-BGD" d="M428,135 L452,128 L458,150 L442,165 L422,162 L420,148 Z"/>
+<path class="cp" id="c-LKA" d="M385,248 L400,244 L402,260 L390,265 L380,258 Z"/>
+<path class="cp" id="c-THA" d="M475,142 L508,135 L515,158 L505,202 L478,212 L462,198 L462,172 L468,155 Z"/>
+<path class="cp" id="c-VNM" d="M508,135 L538,128 L545,152 L535,202 L510,215 L500,202 L505,172 L510,150 Z"/>
+<path class="cp" id="c-MYS" d="M482,215 L518,208 L522,228 L505,238 L482,235 L475,225 Z"/>
+<path class="cp" id="c-IDN" d="M490,252 L542,245 L552,262 L538,278 L498,282 L485,268 Z"/>
+<path class="cp" id="c-PHL" d="M535,162 L558,155 L562,178 L552,208 L532,215 L522,202 L526,178 Z"/>
+<path class="cp" id="c-CHN" d="M348,35 L485,28 L505,52 L508,100 L485,135 L450,145 L412,142 L382,122 L368,95 L355,65 Z"/>
+<path class="cp" id="c-MNG" d="M352,12 L485,8 L495,32 L485,52 L348,58 L342,35 Z"/>
+<path class="cp" id="c-KOR" d="M502,85 L525,82 L528,102 L512,112 L498,105 Z"/>
+<path class="cp" id="c-JPN" d="M525,65 L552,58 L558,78 L548,105 L528,110 L518,95 L520,75 Z"/>
+<path class="cp" id="c-KAZ2" d="M205,38 L212,18 L225,58 Z"/>
+<path class="cp" id="c-ISR2" d="M148,128 L155,108 L162,108 L162,128 Z"/>
+</svg>`,
+
+"North America":`<svg class="map-svg" viewBox="0 0 480 460" xmlns="http://www.w3.org/2000/svg" style="background:#B5D4F4">
+<path class="cp" id="c-CAN" d="M42,18 L368,15 L382,42 L375,102 L338,125 L272,135 L215,128 L158,135 L100,122 L48,102 L28,62 Z"/>
+<path class="cp" id="c-USA" d="M48,128 L342,122 L355,145 L345,222 L292,238 L208,245 L122,238 L55,218 L38,175 Z"/>
+<path class="cp" id="c-MEX" d="M55,238 L212,232 L228,252 L220,292 L188,315 L152,318 L108,302 L72,275 L55,255 Z"/>
+<path class="btn" id="c-CUB" style="fill:#C0DD97;stroke:#fff;stroke-width:1.2;cursor:pointer" d="M188,292 L255,285 L262,302 L248,315 L192,318 L182,308 Z"/>
+<path class="cp" id="c-HTI" d="M252,304 L275,302 L278,318 L262,325 L248,318 Z"/>
+<path class="cp" id="c-DOM" d="M274,302 L302,298 L305,315 L288,322 L272,318 Z"/>
+<path class="cp" id="c-JAM" d="M212,315 L235,312 L238,325 L222,330 L208,322 Z"/>
+<path class="cp" id="c-GTM" d="M122,315 L158,308 L162,328 L148,342 L122,338 L115,328 Z"/>
+<path class="cp" id="c-SLV" d="M122,338 L152,335 L155,348 L138,356 L120,350 Z"/>
+<path class="cp" id="c-HND" d="M142,340 L185,332 L190,350 L172,362 L142,358 L135,350 Z"/>
+<path class="cp" id="c-NIC" d="M152,360 L192,352 L195,372 L175,388 L148,385 L142,372 Z"/>
+<path class="cp" id="c-CRI" d="M155,385 L185,378 L188,398 L172,412 L152,405 Z"/>
+<path class="cp" id="c-PAN" d="M172,405 L218,397 L225,415 L208,428 L172,425 L165,415 Z"/>
+</svg>`,
+
+"South America":`<svg class="map-svg" viewBox="0 0 380 500" xmlns="http://www.w3.org/2000/svg" style="background:#B5D4F4">
+<path class="cp" id="c-COL" d="M72,45 L158,38 L168,62 L162,98 L122,112 L78,105 L60,82 Z"/>
+<path class="cp" id="c-VEN" d="M100,40 L188,32 L202,50 L198,78 L160,88 L118,82 L98,62 Z"/>
+<path class="cp" id="c-GUY" d="M188,40 L222,35 L228,58 L212,78 L190,75 L180,58 Z"/>
+<path class="cp" id="c-SUR" d="M218,38 L245,32 L252,55 L235,72 L215,70 L210,52 Z"/>
+<path class="cp" id="c-ECU" d="M48,88 L100,82 L108,110 L98,140 L60,145 L42,125 L44,102 Z"/>
+<path class="cp" id="c-PER" d="M46,125 L110,118 L120,145 L115,208 L78,232 L42,228 L25,192 L30,155 Z"/>
+<path class="cp" id="c-BOL" d="M110,145 L182,138 L192,158 L188,212 L148,228 L110,222 L100,195 L104,165 Z"/>
+<path class="cp" id="c-BRA" d="M158,38 L285,32 L308,56 L315,115 L300,180 L278,232 L238,262 L188,272 L152,258 L120,232 L110,212 L120,158 L135,118 L145,88 Z"/>
+<path class="cp" id="c-PRY" d="M170,215 L218,208 L222,242 L200,255 L170,252 L160,235 Z"/>
+<path class="cp" id="c-URY" d="M196,262 L242,255 L248,285 L225,305 L192,302 L182,278 Z"/>
+<path class="cp" id="c-ARG" d="M105,242 L248,235 L258,262 L252,342 L225,398 L188,422 L152,415 L115,382 L88,332 L85,282 Z"/>
+<path class="cp" id="c-CHL" d="M78,228 L120,222 L128,258 L118,342 L108,398 L85,412 L65,388 L58,315 L60,258 Z"/>
+</svg>`
 };
 
 const ACHIEVEMENTS=[
@@ -296,13 +392,13 @@ const ACHIEVEMENTS=[
   {id:"streak5",icon:"🔥",name:"On fire",desc:"Get a 5-answer streak",check:p=>p.bestStreak>=5},
   {id:"streak10",icon:"🌋",name:"Unstoppable",desc:"10-answer streak",check:p=>p.bestStreak>=10},
   {id:"hard_win",icon:"💎",name:"Diamond mind",desc:"Score 80%+ on Hard",check:p=>p.hardHighScore>=80},
-  {id:"globe_trotter",icon:"🌐",name:"Globe trotter",desc:"Play all 6 continents",check:p=>(p.continentsPlayed||[]).length>=6},
+  {id:"globe_trotter",icon:"🌐",name:"Globe trotter",desc:"Play all 5 continent sets",check:p=>(p.continentsPlayed||[]).length>=5},
   {id:"century",icon:"✨",name:"Century",desc:"Earn 1000 total XP",check:p=>p.totalXP>=1000},
   {id:"europe_master",icon:"🏰",name:"Europe expert",desc:"Score 90%+ on Europe",check:p=>(p.continentBest||{})['Europe']>=90},
   {id:"africa_master",icon:"🌍",name:"Africa expert",desc:"Score 90%+ on Africa",check:p=>(p.continentBest||{})['Africa']>=90},
   {id:"asia_master",icon:"🐉",name:"Asia expert",desc:"Score 90%+ on Asia",check:p=>(p.continentBest||{})['Asia']>=90},
   {id:"games10",icon:"🎯",name:"Dedicated",desc:"Play 10 rounds",check:p=>p.gamesPlayed>=10},
-  {id:"americas_master",icon:"🦅",name:"Americas expert",desc:"90%+ on North or South America",check:p=>(p.continentBest||{})['North America']>=90||(p.continentBest||{})['South America']>=90},
+  {id:"americas",icon:"🦅",name:"Americas expert",desc:"90%+ on N or S America",check:p=>(p.continentBest||{})['North America']>=90||(p.continentBest||{})['South America']>=90},
 ];
 
 const LEVELS=[
@@ -317,28 +413,15 @@ const LEVELS=[
 ];
 
 let profile={gamesPlayed:0,totalScore:0,totalXP:0,totalCorrect:0,totalAnswers:0,bestStreak:0,perfectRounds:0,hardHighScore:0,continentsPlayed:[],continentBest:{},unlockedAchievements:[],leaderboard:[]};
-try{const s=localStorage.getItem('geoQuizV2');if(s)profile=Object.assign(profile,JSON.parse(s));}catch(e){}
-function saveProfile(){try{localStorage.setItem('geoQuizV2',JSON.stringify(profile));}catch(e){}}
+try{const s=localStorage.getItem('geoQuizV3');if(s)profile=Object.assign(profile,JSON.parse(s));}catch(e){}
+function saveProfile(){try{localStorage.setItem('geoQuizV3',JSON.stringify(profile));}catch(e){}}
 
 let G={diff:'easy',continent:'',queue:[],idx:0,step:0,score:0,correct:0,total:0,streak:0,maxStreak:0};
-let topoData=null;
-
-async function loadTopo(){
-  if(topoData)return topoData;
-  try{
-    const r=await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
-    topoData=await r.json();
-    return topoData;
-  }catch(e){return null;}
-}
 
 function getLevelInfo(xp){
   for(let i=LEVELS.length-1;i>=0;i--){
     const prev=i===0?0:LEVELS[i-1].xpNeeded;
-    const next=LEVELS[i].xpNeeded;
-    if(i===0||xp>=prev){
-      return{...LEVELS[i],prevXP:prev,nextXP:next,progress:Math.min((xp-prev)/(next-prev),1)};
-    }
+    if(i===0||xp>=prev) return{...LEVELS[i],prevXP:prev,nextXP:LEVELS[i].xpNeeded,progress:Math.min((xp-prev)/(LEVELS[i].xpNeeded-prev),1)};
   }
   return{...LEVELS[0],prevXP:0,nextXP:100,progress:xp/100};
 }
@@ -353,9 +436,7 @@ function updateHomeUI(){
   document.getElementById('home-total-score').textContent=profile.totalScore.toLocaleString();
   document.getElementById('home-games').textContent=profile.gamesPlayed;
   document.getElementById('home-best-streak').textContent=profile.bestStreak;
-  const acc=profile.totalAnswers>0?Math.round(profile.totalCorrect/profile.totalAnswers*100)+'%':'—';
-  document.getElementById('home-accuracy').textContent=acc;
-  if(G.streak>0){document.getElementById('home-streak').style.display='inline-block';document.getElementById('streak-num').textContent=G.streak;}
+  document.getElementById('home-accuracy').textContent=profile.totalAnswers>0?Math.round(profile.totalCorrect/profile.totalAnswers*100)+'%':'-';
   renderAchievements();renderLeaderboard();
 }
 
@@ -375,35 +456,24 @@ function renderAchievements(){
 
 function renderLeaderboard(){
   const lb=profile.leaderboard||[];
-  const empty=document.getElementById('lb-empty');
-  const rows=document.getElementById('lb-rows');
-  if(!lb.length){empty.style.display='block';rows.innerHTML='';return;}
-  empty.style.display='none';
-  rows.innerHTML=lb.map((e,i)=>`
+  document.getElementById('lb-empty').style.display=lb.length?'none':'block';
+  document.getElementById('lb-rows').innerHTML=lb.map((e,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:0.5px solid rgba(0,0,0,0.07);font-size:13px">
       <span style="width:22px;color:#888;font-size:12px">${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.'}</span>
       <span style="flex:1">${e.continent}</span>
-      <span class="badge badge-${e.diff}" style="margin-right:4px">${e.diff}</span>
-      <span style="font-size:11px;color:#888;margin-right:6px">${e.acc}%</span>
+      <span class="badge badge-${e.diff}">${e.diff}</span>
+      <span style="font-size:11px;color:#888;margin:0 4px">${e.acc}%</span>
       <span style="font-weight:500">${e.score}</span>
     </div>`).join('');
 }
 
 function checkAchievements(){
-  const newOnes=[];
-  ACHIEVEMENTS.forEach(a=>{
-    if(!profile.unlockedAchievements.includes(a.id)&&a.check(profile)){
-      profile.unlockedAchievements.push(a.id);newOnes.push(a);
-    }
-  });
-  return newOnes;
+  const n=[];
+  ACHIEVEMENTS.forEach(a=>{if(!profile.unlockedAchievements.includes(a.id)&&a.check(profile)){profile.unlockedAchievements.push(a.id);n.push(a);}});
+  return n;
 }
 
-function setDiff(d){
-  G.diff=d;
-  ['easy','medium','hard'].forEach(x=>document.getElementById('d-'+x).classList.toggle('active',x===d));
-}
-
+function setDiff(d){G.diff=d;['easy','medium','hard'].forEach(x=>document.getElementById('d-'+x).classList.toggle('active',x===d));}
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 function showHome(){updateHomeUI();showScreen('s-home');}
 function shuffle(arr){return arr.slice().sort(()=>Math.random()-0.5);}
@@ -440,185 +510,117 @@ function renderStep(){
 
 function getPool(){return G.continent==='All'?Object.values(COUNTRIES).flat():(COUNTRIES[G.continent]||[]);}
 function getOptions(field,correct,n){
-  const others=shuffle(getPool().filter(c=>c[field]!==correct)).slice(0,n-1).map(c=>c[field]);
-  return shuffle([correct,...others]);
+  return shuffle([correct,...shuffle(getPool().filter(c=>c[field]!==correct)).slice(0,n-1).map(c=>c[field])]);
 }
 
 function renderFlagStep(q,body){
   body.innerHTML=`<div class="card" style="text-align:center">
     <p style="font-size:12px;color:#888;margin-bottom:4px">Step 1 — What country is this flag?</p>
     <div class="flag-box">${q.flag}</div></div><div id="ans-area"></div>`;
-  renderAnswerArea('name',q,'ans-area');
+  renderAnswerArea('name',q);
 }
 
 function renderCapitalStep(q,body){
   body.innerHTML=`<div class="card" style="text-align:center">
-    <p style="font-size:12px;color:#888;margin-bottom:4px">Step 2 — What is the capital of ${q.name}?</p>
-    <div style="font-size:36px;margin:6px 0">${q.flag}</div>
+    <p style="font-size:12px;color:#888;margin-bottom:4px">Step 2 — Capital of ${q.name}?</p>
+    <div style="font-size:38px;margin:6px 0">${q.flag}</div>
     <p style="font-size:15px;font-weight:500">${q.name}</p></div><div id="ans-area"></div>`;
-  renderAnswerArea('capital',q,'ans-area');
+  renderAnswerArea('capital',q);
 }
 
-function renderAnswerArea(field,q,cid){
-  const cont=document.getElementById(cid);
+function renderAnswerArea(field,q){
+  const cont=document.getElementById('ans-area');
   if(G.diff==='hard'){
-    cont.innerHTML=`<input type="text" id="hard-input" placeholder="Type your answer..." style="width:100%;margin-bottom:8px">
-      <button class="btn btn-primary" onclick="checkHard('${field}','${(field==='name'?q.name:q.capital).replace(/'/g,"\\'")}')">Check answer</button>`;
-    setTimeout(()=>{const el=document.getElementById('hard-input');if(el)el.focus();},50);
-    return;
+    cont.innerHTML=`<input type="text" id="hi" placeholder="Type your answer..." style="width:100%;margin-bottom:8px">
+      <button class="btn btn-primary" onclick="checkHard('${field}','${(field==='name'?q.name:q.capital).replace(/'/g,"\\'")}')">Check</button>`;
+    setTimeout(()=>{const e=document.getElementById('hi');if(e)e.focus();},50);return;
   }
   const n=G.diff==='medium'?6:4;
-  const opts=getOptions(field,q[field],n);
-  cont.innerHTML=opts.map(o=>`<button class="btn" onclick="checkChoice(this,'${o.replace(/'/g,"\\'")}','${q[field].replace(/'/g,"\\'")}','${field}')">${o}</button>`).join('');
+  cont.innerHTML=getOptions(field,q[field],n).map(o=>
+    `<button class="btn" onclick="checkChoice(this,'${o.replace(/'/g,"\\'")}','${q[field].replace(/'/g,"\\'")}','${field}')">${o}</button>`).join('');
 }
 
 function renderMapStep(q,body){
-  body.innerHTML=`<div class="card" style="padding:10px 12px">
-    <p style="font-size:12px;color:#888;margin-bottom:2px">Step 3 — Click on <b style="color:#1a1a1a">${q.name}</b> on the map</p>
-    <p style="font-size:12px;color:#666">${q.flag} Capital: ${q.capital}</p>
-  </div>
-  <div class="map-container" id="map-container"><div id="map-loading" style="text-align:center;padding:40px;font-size:13px;color:#888">Loading map...</div></div>
-  <div id="map-feedback" style="font-size:13px;color:#666;padding:4px 0 8px;min-height:22px"></div>`;
-  loadAndDrawMap(q);
-}
-
-async function loadAndDrawMap(q){
-  const topo=await loadTopo();
-  const container=document.getElementById('map-container');
-  if(!container)return;
-  if(!topo){
-    container.innerHTML=`<div style="padding:20px;text-align:center;font-size:13px;color:#888">Map unavailable offline. <button class="btn btn-primary" style="width:auto;display:inline-flex;margin-top:8px" onclick="handleAnswer(false,'map','${q.name}')">Skip this step</button></div>`;
-    return;
-  }
-  container.innerHTML='';
-
-  const countries=topojson.feature(topo,topo.objects.countries);
-  const continent=G.continent==='All'?null:G.continent;
-  const validISOs=continent?new Set(CONTINENT_ISO[continent]||[]):null;
-
-  const numericToISO={};
-  Object.entries(CONTINENT_ISO).forEach(([cont,isos])=>{
-    isos.forEach(iso=>numericToISO[iso]=iso);
-  });
-
-  const ISO3166={"004":"AFG","008":"ALB","012":"DZA","024":"AGO","032":"ARG","036":"AUS","040":"AUT","050":"BGD","056":"BEL","064":"BTN","068":"BOL","076":"BRA","100":"BGR","116":"KHM","120":"CMR","124":"CAN","144":"LKA","152":"CHL","156":"CHN","170":"COL","178":"COG","180":"COD","188":"CRI","191":"HRV","192":"CUB","196":"CYP","203":"CZE","208":"DNK","214":"DOM","218":"ECU","818":"EGY","222":"SLV","231":"ETH","246":"FIN","250":"FRA","266":"GAB","276":"DEU","288":"GHA","300":"GRC","320":"GTM","324":"GIN","332":"HTI","340":"HND","348":"HUN","356":"IND","360":"IDN","364":"IRN","368":"IRQ","372":"IRL","376":"ISR","380":"ITA","388":"JAM","392":"JPN","400":"JOR","398":"KAZ","404":"KEN","408":"PRK","410":"KOR","414":"KWT","418":"LAO","422":"LBN","430":"LBR","434":"LBY","440":"LTU","442":"LUX","484":"MEX","496":"MNG","504":"MAR","508":"MOZ","516":"NAM","524":"NPL","528":"NLD","540":"NCL","554":"NZL","562":"NER","566":"NGA","578":"NOR","586":"PAK","591":"PAN","598":"PNG","600":"PRY","604":"PER","608":"PHL","616":"POL","620":"PRT","630":"PRI","642":"ROU","643":"RUS","646":"RWA","682":"SAU","686":"SEN","694":"SLE","703":"SVK","705":"SVN","706":"SOM","710":"ZAF","724":"ESP","729":"SDN","752":"SWE","756":"CHE","760":"SYR","764":"THA","788":"TUN","792":"TUR","800":"UGA","804":"UKR","784":"ARE","840":"USA","858":"URY","862":"VEN","704":"VNM","887":"YEM","894":"ZMB","716":"ZWE","050":"BGD","688":"SRB","070":"BIH","807":"MKD","499":"MNE","020":"AND","040":"AUT","756":"CHE","250":"FRA","492":"MCO","076":"BRA","858":"URY","591":"PAN","388":"JAM","214":"DOM","332":"HTI","222":"SLV","188":"CRI","320":"GTM","340":"HND","558":"NIC","084":"BLZ","036":"AUS","554":"NZL","598":"PNG","242":"FJI","090":"SLB","548":"VUT","882":"WSM","776":"TON","296":"KIR","583":"FSM","585":"PLW","584":"MHL","520":"NRU","798":"TUV","818":"EGY"};
-
-  const targetISO=q.iso;
+  const continent=G.continent==='All'?'All':G.continent;
+  const mapSVG=continent==='All'?MAPS['Europe']:MAPS[continent];
   const quizISOs=new Set(G.queue.map(c=>c.iso));
 
-  const W=container.clientWidth||400;
-  const H=Math.round(W*0.65);
+  body.innerHTML=`<div class="card" style="padding:10px 12px">
+    <p style="font-size:12px;color:#888;margin-bottom:2px">Step 3 — Click on <b style="color:#1a1a1a">${q.name}</b></p>
+    <p style="font-size:12px;color:#666">${q.flag} Capital: ${q.capital}</p>
+  </div>
+  <div id="map-holder">${mapSVG||''}</div>
+  <div id="map-feedback" style="font-size:13px;color:#666;min-height:22px;padding:4px 0 8px"></div>`;
 
-  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
-  svg.setAttribute('id','map-svg');
-  svg.style.cssText=`width:100%;height:auto;display:block;cursor:default`;
-
-  let projection;
-  if(continent==='Europe'){
-    projection=d3.geoMercator().center([15,54]).scale(W*1.1).translate([W/2,H/2]);
-  } else if(continent==='Africa'){
-    projection=d3.geoMercator().center([20,0]).scale(W*0.85).translate([W/2,H/2]);
-  } else if(continent==='Asia'){
-    projection=d3.geoMercator().center([90,35]).scale(W*0.55).translate([W/2,H/2]);
-  } else if(continent==='North America'){
-    projection=d3.geoMercator().center([-95,50]).scale(W*0.6).translate([W/2,H/2]);
-  } else if(continent==='South America'){
-    projection=d3.geoMercator().center([-58,-15]).scale(W*0.9).translate([W/2,H/2]);
-  } else if(continent==='Oceania'){
-    projection=d3.geoMercator().center([150,-25]).scale(W*0.7).translate([W/2,H/2]);
-  } else {
-    projection=d3.geoNaturalEarth1().scale(W*0.18).translate([W/2,H/2]);
+  if(!mapSVG){
+    document.getElementById('map-holder').innerHTML=`<div style="padding:20px;text-align:center;font-size:13px;color:#888;background:#f5f4f0;border-radius:10px;margin-bottom:10px">Map not available for "All continents" mix — <button class="btn btn-primary" style="width:auto;display:inline-flex;margin-top:8px" onclick="skipMapStep()">Skip step</button></div>`;
+    return;
   }
 
-  const path=d3.geoPath().projection(projection);
-
-  countries.features.forEach(feature=>{
-    const numId=String(feature.id).padStart(3,'0');
-    const iso=ISO3166[numId];
-    if(!iso)return;
-    if(validISOs&&!validISOs.has(iso))return;
-
-    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
-    const d=path(feature);
-    if(!d)return;
-    p.setAttribute('d',d);
-    p.setAttribute('data-iso',iso);
-    p.classList.add('country-path');
-
-    if(!quizISOs.has(iso)){
-      p.classList.add('dimmed');
+  const svg=document.querySelector('#map-holder .map-svg');
+  if(!svg)return;
+  svg.querySelectorAll('.cp').forEach(p=>{
+    const iso=p.id.replace('c-','');
+    if(!quizISOs.has(iso)){p.classList.add('dimmed');}
+    else{
+      p.addEventListener('click',()=>handleMapClick(iso,q.iso,p,svg));
     }
-
-    p.addEventListener('click',()=>handleMapClick(iso,targetISO,p,svg));
-    p.addEventListener('mouseenter',()=>{if(!svg.dataset.answered)p.style.fill='#97C459';});
-    p.addEventListener('mouseleave',()=>{if(!svg.dataset.answered&&!p.classList.contains('dimmed'))p.style.fill='';});
-    svg.appendChild(p);
   });
-
-  container.appendChild(svg);
 }
+
+function skipMapStep(){handleAnswer(false,'map','(skipped)');}
 
 function handleMapClick(clickedISO,targetISO,clickedPath,svg){
   if(svg.dataset.answered)return;
   svg.dataset.answered='1';
-  svg.querySelectorAll('.country-path').forEach(p=>p.style.cursor='default');
-
+  svg.querySelectorAll('.cp:not(.dimmed)').forEach(p=>{p.style.pointerEvents='none';});
   const ok=clickedISO===targetISO;
   clickedPath.classList.add(ok?'correct-flash':'wrong-flash');
-  clickedPath.style.fill=ok?'#1D9E75':'#E24B4A';
-
   if(!ok){
-    const correctPath=svg.querySelector(`[data-iso="${targetISO}"]`);
-    if(correctPath){correctPath.classList.add('reveal-flash');correctPath.style.fill='#1D9E75';correctPath.style.opacity='0.8';}
+    const correct=svg.querySelector('#c-'+targetISO);
+    if(correct){correct.classList.remove('dimmed');correct.classList.add('reveal-flash');}
   }
-
   const fb=document.getElementById('map-feedback');
   if(fb)fb.innerHTML=ok
     ?`<span style="color:#0F6E56">✓ Correct! That's ${G.queue[G.idx].name}.</span>`
-    :`<span style="color:#A32D2D">✗ You clicked the wrong country — the green one is ${G.queue[G.idx].name}.</span>`;
-
+    :`<span style="color:#A32D2D">✗ Wrong — the green country is ${G.queue[G.idx].name}.</span>`;
   handleAnswer(ok,'map',G.queue[G.idx].name);
 }
 
 function checkChoice(btn,chosen,correct,field){
-  const btns=btn.parentNode.querySelectorAll('button');
-  btns.forEach(b=>b.disabled=true);
+  btn.parentNode.querySelectorAll('button').forEach(b=>b.disabled=true);
   const ok=chosen===correct;
   btn.classList.add(ok?'correct':'wrong');
-  if(!ok)btns.forEach(b=>{if(b.textContent.trim()===correct)b.classList.add('reveal');});
+  if(!ok)btn.parentNode.querySelectorAll('button').forEach(b=>{if(b.textContent.trim()===correct)b.classList.add('reveal');});
   handleAnswer(ok,field,correct);
 }
 function checkHard(field,correct){
-  const input=document.getElementById('hard-input');
-  if(!input)return;
+  const input=document.getElementById('hi');if(!input)return;
   const ok=input.value.trim().toLowerCase()===correct.toLowerCase();
-  input.disabled=true;
-  input.style.background=ok?'#E1F5EE':'#FCEBEB';
-  input.style.color=ok?'#0F6E56':'#A32D2D';
+  input.disabled=true;input.style.background=ok?'#E1F5EE':'#FCEBEB';input.style.color=ok?'#0F6E56':'#A32D2D';
   handleAnswer(ok,field,correct);
 }
 
 function handleAnswer(ok,field,correct){
   G.total++;
-  if(ok){G.correct++;G.streak++;if(G.streak>G.maxStreak)G.maxStreak=G.streak;}
-  else G.streak=0;
+  if(ok){G.correct++;G.streak++;if(G.streak>G.maxStreak)G.maxStreak=G.streak;}else G.streak=0;
   if(G.streak===5)showToast('🔥 5 in a row!');
   if(G.streak===10)showToast('🌋 10 streak! Unstoppable!');
   const hud=document.getElementById('q-streak-hud');
-  if(G.streak>=2){hud.style.display='';document.getElementById('q-streak-val').textContent=G.streak;}
-  else hud.style.display='none';
+  if(G.streak>=2){hud.style.display='';document.getElementById('q-streak-val').textContent=G.streak;}else hud.style.display='none';
   const base=G.diff==='easy'?10:G.diff==='medium'?15:20;
   const bonus=ok?Math.min(G.streak-1,4)*2:0;
   G.score+=ok?base+bonus:0;
   document.getElementById('q-score').textContent=G.score;
-  const fb=document.createElement('div');
-  fb.className='feedback '+(ok?'good':'bad');
-  const streakMsg=ok&&G.streak>=3?` (${G.streak}x streak +${bonus} bonus)`:'';
-  if(field!=='map')fb.innerHTML=ok?`✓ Correct!${streakMsg}`:`✗ The answer was: <b>${correct}</b>`;
-  const body=document.getElementById('q-body');
-  const ex=body.querySelector('.feedback');if(ex)ex.remove();
-  if(field!=='map')body.appendChild(fb);
+  if(field!=='map'){
+    const fb=document.createElement('div');
+    fb.className='feedback '+(ok?'good':'bad');
+    const sm=ok&&G.streak>=3?` (${G.streak}x streak +${bonus})`:'';
+    fb.innerHTML=ok?`✓ Correct!${sm}`:`✗ Answer: <b>${correct}</b>`;
+    const body=document.getElementById('q-body');
+    const ex=body.querySelector('.feedback');if(ex)ex.remove();
+    body.appendChild(fb);
+  }
   document.getElementById('next-btn').style.display='block';
 }
 
@@ -646,35 +648,31 @@ function endRound(){
   if(!profile.continentsPlayed.includes(G.continent))profile.continentsPlayed.push(G.continent);
   if(!profile.continentBest)profile.continentBest={};
   if(!profile.continentBest[G.continent]||acc>profile.continentBest[G.continent])profile.continentBest[G.continent]=acc;
-  profile.leaderboard=profile.leaderboard||[];
   profile.leaderboard.push({continent:G.continent,diff:G.diff,score:G.score,acc,date:new Date().toLocaleDateString()});
-  profile.leaderboard.sort((a,b)=>b.score-a.score);
-  profile.leaderboard=profile.leaderboard.slice(0,15);
-  const newAchs=checkAchievements();
-  saveProfile();
+  profile.leaderboard.sort((a,b)=>b.score-a.score);profile.leaderboard=profile.leaderboard.slice(0,15);
+  const newAchs=checkAchievements();saveProfile();
 
   document.getElementById('res-score').textContent=G.score;
   document.getElementById('res-acc').textContent=acc+'%';
   document.getElementById('res-streak').textContent=G.maxStreak;
   document.getElementById('res-xp').textContent='+'+xpEarned+' XP';
-  const diffMap={easy:'badge-easy',medium:'badge-medium',hard:'badge-hard'};
-  document.getElementById('res-sub').innerHTML=`${G.continent} · <span class="badge ${diffMap[G.diff]}">${G.diff}</span>`;
+  const dm={easy:'badge-easy',medium:'badge-medium',hard:'badge-hard'};
+  document.getElementById('res-sub').innerHTML=`${G.continent} · <span class="badge ${dm[G.diff]}">${G.diff}</span>`;
 
-  const banner=document.getElementById('result-award-banner');
-  if(stars===3){banner.className='award-banner gold';banner.innerHTML=`<div style="font-size:36px;margin-bottom:4px">🏆</div><div style="font-size:18px;font-weight:500;color:#633806">Gold — Perfect!</div><div style="font-size:12px;color:#854F0B">${acc}% accuracy · ${G.maxStreak} streak</div>`;}
-  else if(stars===2){banner.className='award-banner silver';banner.innerHTML=`<div style="font-size:36px;margin-bottom:4px">🥈</div><div style="font-size:18px;font-weight:500;color:#444">Silver — Great job!</div><div style="font-size:12px;color:#666">${acc}% accuracy</div>`;}
-  else if(stars===1){banner.className='award-banner bronze';banner.innerHTML=`<div style="font-size:36px;margin-bottom:4px">🥉</div><div style="font-size:18px;font-weight:500;color:#712B13">Bronze — Keep going!</div><div style="font-size:12px;color:#993C1D">${acc}% accuracy</div>`;}
-  else{banner.className='award-banner none';banner.innerHTML=`<div style="font-size:28px;margin-bottom:4px">📚</div><div style="font-size:16px;font-weight:500;color:#444">Keep practising!</div><div style="font-size:12px;color:#666">You'll get there!</div>`;}
+  const b=document.getElementById('result-award-banner');
+  if(stars===3){b.className='award-banner gold';b.innerHTML=`<div style="font-size:36px">🏆</div><div style="font-size:18px;font-weight:500;color:#633806;margin-top:4px">Gold — Perfect!</div><div style="font-size:12px;color:#854F0B">${acc}% · ${G.maxStreak} streak</div>`;}
+  else if(stars===2){b.className='award-banner silver';b.innerHTML=`<div style="font-size:36px">🥈</div><div style="font-size:18px;font-weight:500;color:#444;margin-top:4px">Silver — Great job!</div><div style="font-size:12px;color:#666">${acc}% accuracy</div>`;}
+  else if(stars===1){b.className='award-banner bronze';b.innerHTML=`<div style="font-size:36px">🥉</div><div style="font-size:18px;font-weight:500;color:#712B13;margin-top:4px">Bronze — Keep going!</div><div style="font-size:12px;color:#993C1D">${acc}% accuracy</div>`;}
+  else{b.className='award-banner none';b.innerHTML=`<div style="font-size:28px">📚</div><div style="font-size:16px;font-weight:500;color:#444;margin-top:4px">Keep practising!</div>`;}
 
-  const starsRow=document.getElementById('result-stars');
-  starsRow.innerHTML=[1,2,3].map(i=>`<span class="star" id="rstar${i}">⭐</span>`).join('');
+  document.getElementById('result-stars').innerHTML=[1,2,3].map(i=>`<span class="star" id="rstar${i}">⭐</span>`).join('');
   [1,2,3].forEach(i=>{if(i<=stars)setTimeout(()=>{const s=document.getElementById('rstar'+i);if(s)s.classList.add('earned');},i*300);});
 
   document.getElementById('new-achievements').innerHTML=newAchs.length?`
     <div style="background:#FAEEDA;border-radius:10px;padding:10px 12px;margin-bottom:8px">
       <div style="font-size:12px;font-weight:500;color:#633806;margin-bottom:6px">🏆 New achievements!</div>
       ${newAchs.map(a=>`<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:#854F0B;margin-bottom:4px"><span style="font-size:18px">${a.icon}</span><b>${a.name}</b> — ${a.desc}</div>`).join('')}
-    </div>`:'' ;
+    </div>`:'';
 
   document.getElementById('res-breakdown').innerHTML=G.queue.map(q=>
     `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid rgba(0,0,0,0.06);font-size:13px">
@@ -694,14 +692,14 @@ function confetti(){
   const app=document.getElementById('app');
   for(let i=0;i<40;i++){
     const el=document.createElement('div');el.className='confetti-piece';
-    el.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};transform:rotate(${Math.random()*360}deg)`;
+    el.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${colors[i%colors.length]};transform:rotate(${Math.random()*360}deg)`;
     app.appendChild(el);
-    el.animate([{transform:`translateY(0) rotate(0deg)`,opacity:1},{transform:`translateY(${200+Math.random()*300}px) rotate(${720}deg)`,opacity:0}],{duration:1200+Math.random()*800,easing:'ease-in'}).onfinish=()=>el.remove();
+    el.animate([{transform:`translateY(0) rotate(0)`,opacity:1},{transform:`translateY(${250+Math.random()*250}px) rotate(720deg)`,opacity:0}],
+      {duration:1200+Math.random()*800,easing:'ease-in'}).onfinish=()=>el.remove();
   }
 }
 
 updateHomeUI();
-loadTopo();
 </script>
 </body>
 </html>
