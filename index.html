@@ -530,7 +530,8 @@ function checkAnswer(btn,chosen,correct,field){
   }else{
     btn.classList.add('wrong');G.streak=0;
     document.querySelectorAll('.ans-btn').forEach(b=>{
-      if(b.getAttribute('onclick')?.match(/'([^']+)','[^']+'/))?.[1]===correct&&b.classList.add('reveal');
+      const m=b.getAttribute('onclick')?.match(/'([^']+)','[^']+'/);
+      if(m&&m[1]===correct)b.classList.add('reveal');
     });
     const cv=field==='name'?q.name:q.capital;
     feedback.className='feedback-bar wrong';
